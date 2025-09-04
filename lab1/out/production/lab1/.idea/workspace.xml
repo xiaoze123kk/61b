@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c8e25618-f5c5-4c30-8b1b-c183421353b3" name="更改" comment="" />
+    <list default="true" id="c8e25618-f5c5-4c30-8b1b-c183421353b3" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/Collatz.java" beforeDir="false" afterPath="$PROJECT_DIR$/Collatz.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
