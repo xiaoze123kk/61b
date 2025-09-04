@@ -44,6 +44,17 @@ public class Model extends Observable {
         this.gameOver = gameOver;
     }
 
+//    public Model() {
+//    }
+//
+//    public Model(Board board, int score, int maxScore, boolean gameOver, int MAX_PIECE) {
+//        this.board = board;
+//        this.score = score;
+//        this.maxScore = maxScore;
+//        this.gameOver = gameOver;
+//        this.MAX_PIECE = MAX_PIECE;
+//    }
+
     /** Return the current Tile at (COL, ROW), where 0 <= ROW < size(),
      *  0 <= COL < size(). Returns null if there is no tile there.
      *  Used for testing. Should be deprecated and removed.
@@ -138,6 +149,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for(int i = 0 ; i<b.size(); i++){
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i,j) == null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +166,17 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i,j) == null){
+                    continue;
+                }
+                if (b.tile(i,j).value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -159,6 +188,22 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (emptySpaceExists(b)){
+            return true;
+        }
+
+//        for (int r = 0; r < b.size(); r++) {
+//            for (int c = 0; c < b.size(); c++) {
+//                if(c+1< b.size()){
+//                    if (b.tile(c,r).value()==b.tile(c+1,r).value())return true;
+//                }
+//                if (r+1< b.size()){
+//                    if (b.tile(c,r).value()==b.tile(c,r+1).value())return true;
+//                }
+//
+//            }
+//        }
+
         return false;
     }
 
@@ -199,5 +244,69 @@ public class Model extends Observable {
     /** Returns hash code of Model’s string. */
     public int hashCode() {
         return toString().hashCode();
+    }
+
+    /**
+     * 获取
+     * @return board
+     */
+    public Board getBoard() {
+        return board;
+    }
+
+    /**
+     * 设置
+     * @param board
+     */
+    public void setBoard(Board board) {
+        this.board = board;
+    }
+
+    /**
+     * 获取
+     * @return score
+     */
+    public int getScore() {
+        return score;
+    }
+
+    /**
+     * 设置
+     * @param score
+     */
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    /**
+     * 获取
+     * @return maxScore
+     */
+    public int getMaxScore() {
+        return maxScore;
+    }
+
+    /**
+     * 设置
+     * @param maxScore
+     */
+    public void setMaxScore(int maxScore) {
+        this.maxScore = maxScore;
+    }
+
+    /**
+     * 获取
+     * @return gameOver
+     */
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    /**
+     * 设置
+     * @param gameOver
+     */
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
     }
 }
