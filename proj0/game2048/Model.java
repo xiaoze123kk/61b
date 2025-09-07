@@ -105,6 +105,52 @@ public class Model extends Observable {
         setChanged();
     }
 
+
+    /**
+     * 现在我是一列一列的处理合并
+     * @param col
+     */
+    public void SingleCol(int col,Side side){
+        board.setViewingPerspective(side);
+        boolean[] mergedRow = {false,false,false,false};
+
+        for (int r = board.size() - 2; r >= 0; r--) {
+            Tile CurrentTile = board.tile(col,r);
+            //首先，我从当前的tile（先判断是否为null）往上数，数到到顶不能再数了或者碰到了第一个tile，就获取
+            //第一个碰到的tile，把当前的tile移动到该格子或者合并
+            //还要记忆化已经合并过的tile
+            if (CurrentTile==null){
+                continue;
+            }
+
+            Tile FirstTile = null;
+            boolean flag = false;
+
+            for (int i = r+1; i < board.size(); i++) {
+                FirstTile = board.tile(col,i);
+                if(FirstTile==null){
+                    continue;
+                }
+                else {
+                    if (FirstTile.value()==CurrentTile.value() && (!mergedRow[FirstTile.row()]) ){
+                        if(board.move(col, FirstTile.row(), CurrentTile)) this.score += CurrentTile.value()*2;
+                        mergedRow[FirstTile.row()] = true;
+                    }
+                    else {
+                        board.move(col, FirstTile.row()-1, CurrentTile);
+                    }
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag)
+                board.move(col, board.size()-1,CurrentTile );
+
+        }
+        board.setViewingPerspective(Side.NORTH);
+    }
+
+
     /** Tilt the board toward SIDE. Return true iff this changes the board.
      *
      * 1. If two Tile objects are adjacent in the direction of motion and have
@@ -124,6 +170,13 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+
+        for (int c = 0; c < board.size(); c++) {
+            SingleCol(c,side);
+        }
+
+        changed = true;
+
 
         checkGameOver();
         if (changed) {
@@ -192,17 +245,17 @@ public class Model extends Observable {
             return true;
         }
 
-//        for (int r = 0; r < b.size(); r++) {
-//            for (int c = 0; c < b.size(); c++) {
-//                if(c+1< b.size()){
-//                    if (b.tile(c,r).value()==b.tile(c+1,r).value())return true;
-//                }
-//                if (r+1< b.size()){
-//                    if (b.tile(c,r).value()==b.tile(c,r+1).value())return true;
-//                }
-//
-//            }
-//        }
+        for (int r = 0; r < b.size(); r++) {
+            for (int c = 0; c < b.size(); c++) {
+                if(c+1< b.size()){
+                    if (b.tile(c,r).value()==b.tile(c+1,r).value())return true;
+                }
+                if (r+1< b.size()){
+                    if (b.tile(c,r).value()==b.tile(c,r+1).value())return true;
+                }
+
+            }
+        }
 
         return false;
     }
