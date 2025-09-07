@@ -106,49 +106,48 @@ public class Model extends Observable {
     }
 
 
-    /**
-     * 现在我是一列一列的处理合并
-     * @param col
-     */
-    public void SingleCol(int col,Side side){
-        board.setViewingPerspective(side);
-        boolean[] mergedRow = {false,false,false,false};
 
+    public boolean SingleCol(int col,Side side) {
+        this.board.setViewingPerspective(side);
+        boolean change = false;
+        boolean[] merged = {false, false, false, false};
         for (int r = board.size() - 2; r >= 0; r--) {
-            Tile CurrentTile = board.tile(col,r);
-            //首先，我从当前的tile（先判断是否为null）往上数，数到到顶不能再数了或者碰到了第一个tile，就获取
-            //第一个碰到的tile，把当前的tile移动到该格子或者合并
-            //还要记忆化已经合并过的tile
-            if (CurrentTile==null){
+            Tile FirstTile = board.tile(col, r);
+            if (FirstTile == null) {
                 continue;
             }
-
-            Tile FirstTile = null;
-            boolean flag = false;
-
-            for (int i = r+1; i < board.size(); i++) {
-                FirstTile = board.tile(col,i);
-                if(FirstTile==null){
+            //到这里FirstTile肯定不是null
+            //从这里开始从下往上找
+            for (int i = r+1; i< board.size(); i++){
+                Tile ObjectTile = board.tile(col,i);
+                if (ObjectTile==null){
+                    if (i== board.size()-1){
+                        board.move(col,i,FirstTile);
+                        change = true;
+                    }
                     continue;
                 }
-                else {
-                    if (FirstTile.value()==CurrentTile.value() && (!mergedRow[FirstTile.row()]) ){
-                        if(board.move(col, FirstTile.row(), CurrentTile)) this.score += CurrentTile.value()*2;
-                        mergedRow[FirstTile.row()] = true;
-                    }
-                    else {
-                        board.move(col, FirstTile.row()-1, CurrentTile);
-                    }
-                    flag = true;
+                int Object_col = col, Object_row = i;
+                if (FirstTile.value()==ObjectTile.value() && !merged[Object_row]){
+                    board.move(Object_col, Object_row, FirstTile);
+                    this.score+=FirstTile.value()*2;
+                    merged[Object_row] = true;
+                    change = true;
                     break;
                 }
+                else {
+                    board.move(Object_col, Object_row-1,FirstTile );
+                    change = true;
+                    break;
+                }
+
             }
-            if (!flag)
-                board.move(col, board.size()-1,CurrentTile );
 
         }
-        board.setViewingPerspective(Side.NORTH);
+        this.board.setViewingPerspective(Side.NORTH);
+        return change;
     }
+
 
 
     /** Tilt the board toward SIDE. Return true iff this changes the board.
@@ -167,16 +166,12 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
 
         for (int c = 0; c < board.size(); c++) {
-            SingleCol(c,side);
+            if(SingleCol(c,side)){
+                changed = true;
+            }
         }
-
-        changed = true;
-
 
         checkGameOver();
         if (changed) {
