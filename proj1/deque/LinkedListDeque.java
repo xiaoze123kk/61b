@@ -1,12 +1,14 @@
 package deque;
 
+import afu.org.checkerframework.checker.igj.qual.I;
+
 import java.util.Iterator;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Deque<T> {
     private Node sentinel;
     int size;
-    private Node front;//追踪双端队列的最前端
-    private Node back;//追踪双端队列的最后端
+    private Node last;
+
     private class Node<T> {
         public T item;
         public Node prev;//前驱
@@ -22,31 +24,40 @@ public class LinkedListDeque<T> {
     /**
      * Adds an item of type T to the front of the deque.
      * You can assume that item is never null.
+     *
      * @param item
      */
+    @Override
     public void addFirst(T item) {
-        front.prev = new Node(item, null,front);
-        front = front.prev;
+        sentinel.next = new Node(item, sentinel, sentinel.next);
         size++;
+        if (size == 1) {
+            last = sentinel.next;
+            sentinel.next.next = sentinel;
+            sentinel.prev = last;
+        }
     }
 
     /**
      * Adds an item of type T to the back of the deque.
      * You can assume that item is never null.
+     *
      * @param item
      */
     public void addLast(T item) {
-        back.next = new Node(item,back,null);
-        back = back.next;
+        last.next = new Node(item, last, sentinel);
+        sentinel.prev = last.next;
+        last = last.next;
         size++;
     }
 
     /**
      * Returns true if deque is empty, false otherwise.
+     *
      * @return
      */
     public boolean isEmpty() {
-        if(sentinel.prev!=null || sentinel.next!=null){
+        if (sentinel.next == null || sentinel.next == sentinel) {
             return true;
         }
         return false;
@@ -54,6 +65,7 @@ public class LinkedListDeque<T> {
 
     /**
      * Returns the number of items in the deque.
+     *
      * @return
      */
     public int size() {
@@ -61,46 +73,83 @@ public class LinkedListDeque<T> {
     }
 
     /**
-     *  Prints the items in the deque from first to last, separated by a space.
-     *  Once all the items have been printed, print out a new line.
+     * Prints the items in the deque from first to last, separated by a space.
+     * Once all the items have been printed, print out a new line.
      */
     public void printDeque() {
-        
+        if (isEmpty()) {
+            System.out.println("\n");
+            return;
+        }
+        Node p = sentinel.next;
+        while (p != sentinel) {
+            System.out.println(p.item + " ");
+            p = p.next;
+        }
+        System.out.println("\n");
     }
 
     /**
      * Removes and returns the item at the front of the deque. If no such item exists, returns null.
+     *
      * @return
      */
     public T removeFirst() {
-
+        if (isEmpty()) {
+            return null;
+        }
+        Node remove = sentinel.next;
+        sentinel.next = remove.next;
+        remove.next.prev = sentinel;
+        size--;
+        return (T) remove.item;
     }
 
 
     /**
      * Removes and returns the item at the back of the deque. If no such item exists, returns null.
+     *
      * @return
      */
     public T removeLast() {
-
+        if (isEmpty()) {
+            return null;
+        }
+        Node remove = last;
+        remove.prev.next = sentinel;
+        sentinel.prev = remove.prev;
+        last = remove.prev;
+        size--;
+        return (T) remove.item;
     }
 
     /**
      * Gets the item at the given index, where 0 is the front, 1 is the next item, and so forth
      * If no such item exists, returns null. Must not alter the deque
+     *
      * @param index
      * @return
      */
-    public T get(int index)  {
-
+    public T get(int index) {
+//        if (isEmpty() || (index - 1) > size || index < 0) {
+//            return null;
+//        }
+        Node p = sentinel.next;
+        for (int i = 0; i < size; i++) {
+            if(i == index){
+               return  (T) p.item;
+            }
+        }
+        return null;
     }
 
     /**
-     * The Deque objects we’ll make are iterable (i.e. Iterable<T>) so we must provide this method to return an iterator.
+     * The Deque objects we’ll make are iterable (i.e. Iterable<T>)
+     * so we must provide this method to return an iterator.
      * @return
      */
     public Iterator<T> iterator() {
-
+        
     }
 
 
@@ -109,25 +158,49 @@ public class LinkedListDeque<T> {
      * o is considered equal if it is a Deque and if it contains the same contents
      * (as goverened by the generic T’s equals method) in the same order.
      * (ADDED 2/12: You’ll need to use the instance of keywords for this. Read here for more information)
-     * @param o   the reference object with which to compare.
+     *
+     * @param o the reference object with which to compare.
      * @return
      */
     public boolean equals(Object o) {
-
+        if(!(o instanceof Deque)){
+            return false;
+        }
+        if(o == this){
+            return true;
+        }
+        Deque<?> other = (Deque<?>) o;
+        if (other.size() != size){
+            return false;
+        }
+        for (int i = 0; i< size ;i++){
+            T every_item = (T) other.get(i);
+            if (!every_item.equals(this.get(i))){
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
      * Creates an empty linked list deque.
      */
     public LinkedListDeque() {
-        sentinel.item = 0;
-        sentinel.prev = null;
-        sentinel.next = sentinel.prev;
+        sentinel = new Node(0, null, null);
         size = 0;
-        front = sentinel;
-        back = sentinel;
+        last = sentinel;
     }
 
-
+    /**
+     *  Same as get, but uses recursion.
+     * @param index
+     * @return
+     */
+    public T getRecursive(int index){
+        if(index<0){
+            return null;
+        }
+        return getRecursive(index - 1);
+    }
 
 }
