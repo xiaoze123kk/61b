@@ -234,14 +234,14 @@ public class LinkedListDeque<T> implements Deque<T> , Iterable<T> {
      * @param p
      * @return
      */
-    public T getRecursiveHeper(int index, Node p) {
+    public T getRecursive(int index, Node p) {
         if (index < 0 || index >= size || isEmpty()) {
             return null;
         }
         if (index == 0) {
             return (T) p.item;
         }
-        return (T) getRecursiveHeper(index - 1, p.next);
+        return (T) getRecursive(index - 1, p.next);
     }
 
     /**
@@ -251,7 +251,7 @@ public class LinkedListDeque<T> implements Deque<T> , Iterable<T> {
      * @return
      */
     public T getRecursive(int index) {
-        return (T) getRecursiveHeper(index, sentinel.next);
+        return (T) getRecursive(index, sentinel.next);
     }
 
 }
