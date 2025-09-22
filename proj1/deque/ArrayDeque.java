@@ -55,10 +55,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      * @return
      */
     public boolean isEmpty() {
-        if (size != 0) {
-            return false;
-        }
-        return true;
+        return size == 0;
     }
 
     /**
@@ -226,7 +223,19 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      * @param o the reference object with which to compare.
      * @return
      */
+    @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Deque<?>)) return false;
+        Deque<?> other = (Deque<?>) o;
+        if (other.size() != this.size) return false;
+        for (int i = 0; i < size; i++) {
+            Object aVal = this.get(i);
+            Object bVal = other.get(i);
+            if (!aVal.equals(bVal)) {
+                return false;
+            }
+        }
         return true;
     }
 

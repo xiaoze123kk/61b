@@ -365,7 +365,118 @@ public class ArrayDequeTest {
         System.out.println("✅ get 随机测试完成, 最终 size=" + arrayDeque.size());
     }
 
-    // 调试辅助: 打印最后 n 行日志
+    @Test
+    public void randomizedEqualsTest() {
+        System.out.println("🧪 开始 equals 随机测试");
+        ArrayDeque<Integer> a = new ArrayDeque<>();
+        LinkedListDeque<Integer> b = new LinkedListDeque<>();
+        Random rand = new Random(20240922);
+        StringBuilder log = new StringBuilder();
+        int ops = 1500;
+
+        for (int i = 0; i < ops; i++) {
+            int op = rand.nextInt(6); // 0-5
+            try {
+                switch (op) {
+                    case 0: { // addFirst
+                        int v = rand.nextInt(1000);
+                        a.addFirst(v); b.addFirst(v);
+                        log.append(i).append(": addFirst(").append(v).append(")\n");
+                        break; }
+                    case 1: { // addLast
+                        int v = rand.nextInt(1000);
+                        a.addLast(v); b.addLast(v);
+                        log.append(i).append(": addLast(").append(v).append(")\n");
+                        break; }
+                    case 2: { // removeFirst
+                        Integer ra = a.removeFirst();
+                        Integer rb = b.removeFirst();
+                        log.append(i).append(": removeFirst -> A:").append(ra).append(" B:").append(rb).append("\n");
+                        assertEquals(rb, ra, "removeFirst 不一致\n" + buildEqualsState(a, b, log));
+                        break; }
+                    case 3: { // removeLast
+                        Integer ra = a.removeLast();
+                        Integer rb = b.removeLast();
+                        log.append(i).append(": removeLast -> A:").append(ra).append(" B:").append(rb).append("\n");
+                        assertEquals(rb, ra, "removeLast 不一致\n" + buildEqualsState(a, b, log));
+                        break; }
+                    case 4: { // size check
+                        log.append(i).append(": size A=").append(a.size()).append(" B=").append(b.size()).append("\n");
+                        assertEquals(b.size(), a.size(), "size 不一致\n" + buildEqualsState(a, b, log));
+                        break; }
+                    case 5: { // occasional equals 检查
+                        log.append(i).append(": equals 检查\n");
+                        // 自反性
+                        assertTrue(a.equals(a), "自反性失败: a.equals(a) 应为 true\n" + buildEqualsState(a, b, log));
+                        assertTrue(b.equals(b), "自反性失败: b.equals(b) 应为 true\n" + buildEqualsState(a, b, log));
+
+                        // 与 null
+                        assertFalse(a.equals(null), "a.equals(null) 应为 false\n" + buildEqualsState(a, b, log));
+                        assertFalse(b.equals(null), "b.equals(null) 应为 false\n" + buildEqualsState(a, b, log));
+
+                        // 与不同类型
+                        assertFalse(a.equals("string"), "a.equals(不同类型) 应为 false\n" + buildEqualsState(a, b, log));
+
+                        // 构造一个内容相同的 ArrayDeque clone 用于一致性测试
+                        ArrayDeque<Integer> aClone = new ArrayDeque<>();
+                        for (int idx = 0; idx < a.size(); idx++) {
+                            Integer val = a.get(idx);
+                            aClone.addLast(val);
+                        }
+                        assertTrue(a.equals(aClone), "a 与 内容相同的 aClone 应相等\n" + buildEqualsState(a, b, log));
+                        assertTrue(aClone.equals(a), "aClone.equals(a) 应为 true (对称)\n" + buildEqualsState(a, b, log));
+
+                        // 对称性 & 与不同实现的比较
+                        boolean aEqB;
+                        boolean bEqA;
+                        RuntimeException caught = null;
+                        try {
+                            aEqB = a.equals(b);
+                        } catch (RuntimeException ce) { // 捕获潜在的 ClassCastException 等
+                            caught = ce;
+                            aEqB = false; // 占位
+                        }
+                        try {
+                            bEqA = b.equals(a);
+                        } catch (RuntimeException ce) {
+                            caught = ce;
+                            bEqA = false;
+                        }
+
+                        if (caught != null) {
+                            fail("a.equals(b) 或 b.equals(a) 抛出异常: " + caught + "\n" + buildEqualsState(a, b, log));
+                        }
+
+                        // 逻辑：如果内容完全一致，预期应为 true（题目若期望跨实现 equals 成立）
+                        boolean sameContent = sameSequence(a, b);
+                        if (sameContent) {
+                            assertTrue(aEqB, "内容相同应相等 a.equals(b)==false\n" + buildEqualsState(a, b, log));
+                            assertTrue(bEqA, "内容相同应相等 b.equals(a)==false\n" + buildEqualsState(a, b, log));
+                        } else {
+                            // 不同内容时不要求一定 false（但通常应 false）
+                            if (aEqB || bEqA) {
+                                fail("内容不同但 equals 返回 true，违反预期\n" + buildEqualsState(a, b, log));
+                            }
+                        }
+
+                        // 对称性（只在未抛异常下检查）
+                        assertEquals(aEqB, bEqA, "对称性失败: a.equals(b)=" + aEqB + " b.equals(a)=" + bEqA + "\n" + buildEqualsState(a, b, log));
+                        break; }
+                }
+            } catch (AssertionError e) {
+                System.err.println("❌ equals 测试断言失败, 操作序号=" + i);
+                System.err.println(buildEqualsState(a, b, log));
+                throw e;
+            } catch (Exception ex) {
+                System.err.println("💥 未预期异常, 操作序号=" + i + " ex=" + ex);
+                System.err.println(buildEqualsState(a, b, log));
+                throw ex;
+            }
+        }
+        System.out.println("✅ equals 随机测试完成 (共 " + ops + " 次)");
+    }
+
+    // ==== 缺失的辅助方法补回（供 randomizedGetTest 使用）====
     private void printLastLines(String all, int n) {
         String[] lines = all.split("\n");
         int start = Math.max(0, lines.length - n);
@@ -374,7 +485,6 @@ public class ArrayDequeTest {
         }
     }
 
-    // 调试辅助: 打印当前 deque 内容(使用 get)
     private void printDequeContents(ArrayDeque<Integer> d) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < d.size(); i++) {
@@ -383,6 +493,39 @@ public class ArrayDequeTest {
         }
         sb.append(']');
         System.err.println(sb);
+    }
+
+    private boolean sameSequence(ArrayDeque<Integer> a, LinkedListDeque<Integer> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) {
+            Integer va = a.get(i);
+            Integer vb = b.get(i);
+            if (va == null ? vb != null : !va.equals(vb)) return false;
+        }
+        return true;
+    }
+
+    private String buildEqualsState(ArrayDeque<Integer> a, LinkedListDeque<Integer> b, StringBuilder log) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("---- 状态快照 ----\n");
+        sb.append("A size=").append(a.size()).append(" B size=").append(b.size()).append('\n');
+        sb.append("A: ").append(dequeToString(a)).append('\n');
+        sb.append("B: ").append(dequeToString(b)).append('\n');
+        sb.append("最近操作日志: \n");
+        String[] lines = log.toString().split("\n");
+        int start = Math.max(0, lines.length - 25);
+        for (int i = start; i < lines.length; i++) sb.append(lines[i]).append('\n');
+        return sb.toString();
+    }
+
+    private String dequeToString(Deque<Integer> d) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < d.size(); i++) {
+            sb.append(d.get(i));
+            if (i + 1 < d.size()) sb.append(", ");
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     // 统一错误信息构造
