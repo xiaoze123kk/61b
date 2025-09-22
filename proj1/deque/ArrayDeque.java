@@ -3,7 +3,7 @@ package deque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Iterable {
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private int size;
     private T[] array;
     private int nextFirst;
