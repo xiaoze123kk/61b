@@ -1,8 +1,9 @@
 package deque;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Iterable {
     private int size;
     private T[] array;
     private int nextFirst;
@@ -170,8 +171,40 @@ public class ArrayDeque<T> {
      * @return
      */
     public T get(int index) {
-
+        if (index >= size || index < 0) {
+            return null;
+        }
+        int getNext = getFirstPre();
+        int cnt = 0;
+        while (true) {
+            if (cnt == index) {
+                return array[getNext];
+            }
+            getNext = (getNext + 1) % array.length;
+            cnt++;
+        }
     }
+
+    private class ArrayDequeIterator implements Iterator {
+        int index;
+
+        @Override
+        public boolean hasNext() {
+            return index < size;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = get(index);
+            index++;
+            return returnItem;
+        }
+
+        ArrayDequeIterator() {
+            index = 0;
+        }
+    }
+
 
     /**
      * The Deque objects we’ll make are iterable (i.e. Iterable<T>)
@@ -179,8 +212,9 @@ public class ArrayDeque<T> {
      *
      * @return
      */
-//    public Iterator<T> iterator() {
-//    }
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
 
 
     /**

@@ -270,5 +270,139 @@ public class ArrayDequeTest {
             assertTrue(deque.isEmpty());
         }
     }
-}
 
+    @Test
+    public void randomizedGetTest() {
+        System.out.println("🧪 开始 get 随机测试");
+        ArrayDeque<Integer> arrayDeque = new ArrayDeque<>();
+        LinkedList<Integer> oracle = new LinkedList<>();
+        Random r = new Random(114514); // 固定种子方便复现
+        int operations = 2000;
+        StringBuilder log = new StringBuilder();
+
+        for (int i = 0; i < operations; i++) {
+            int op = r.nextInt(7); // 增加一种 get 操作权重
+            try {
+                switch (op) {
+                    case 0: { // addFirst
+                        int v = r.nextInt(1000);
+                        arrayDeque.addFirst(v);
+                        oracle.addFirst(v);
+                        log.append(i).append(": addFirst(").append(v).append(")\n");
+                        break; }
+                    case 1: { // addLast
+                        int v = r.nextInt(1000);
+                        arrayDeque.addLast(v);
+                        oracle.addLast(v);
+                        log.append(i).append(": addLast(").append(v).append(")\n");
+                        break; }
+                    case 2: { // removeFirst
+                        Integer a = arrayDeque.removeFirst();
+                        Integer b = oracle.isEmpty() ? null : oracle.removeFirst();
+                        log.append(i).append(": removeFirst() -> ").append(a).append("\n");
+                        assertEquals(b, a, errMsg("removeFirst 返回不一致", i, log, arrayDeque, oracle));
+                        break; }
+                    case 3: { // removeLast
+                        Integer a = arrayDeque.removeLast();
+                        Integer b = oracle.isEmpty() ? null : oracle.removeLast();
+                        log.append(i).append(": removeLast() -> ").append(a).append("\n");
+                        assertEquals(b, a, errMsg("removeLast 返回不一致", i, log, arrayDeque, oracle));
+                        break; }
+                    case 4: { // size 检查
+                        log.append(i).append(": size() -> ").append(arrayDeque.size()).append("\n");
+                        assertEquals(oracle.size(), arrayDeque.size(), errMsg("size 不一致", i, log, arrayDeque, oracle));
+                        break; }
+                    case 5: { // isEmpty 检查
+                        log.append(i).append(": isEmpty() -> ").append(arrayDeque.isEmpty()).append("\n");
+                        assertEquals(oracle.isEmpty(), arrayDeque.isEmpty(), errMsg("isEmpty 不一致", i, log, arrayDeque, oracle));
+                        break; }
+                    case 6: { // get 测试
+                        if (arrayDeque.size() == 0) { // 空时测试非法索引
+                            int badIdx = r.nextInt(3) - 1; // -1,0,1
+                            Integer got = arrayDeque.get(badIdx);
+                            log.append(i).append(": get(").append(badIdx).append(") -> ").append(got).append(" (空)\n");
+                            assertNull(got, errMsg("空deque get 非法索引应为null", i, log, arrayDeque, oracle));
+                        } else {
+                            // 70% 测试合法索引, 30% 测试非法索引
+                            if (r.nextDouble() < 0.7) {
+                                int idx = r.nextInt(arrayDeque.size());
+                                Integer expect = oracle.get(idx);
+                                Integer actual = arrayDeque.get(idx);
+                                log.append(i).append(": get(").append(idx).append(") -> ").append(actual).append("\n");
+                                if ((expect == null && actual != null) || (expect != null && !expect.equals(actual))) {
+                                    fail(errMsg("get 返回值错误 index=" + idx + " 期望=" + expect + " 实际=" + actual, i, log, arrayDeque, oracle));
+                                }
+                            } else {
+                                int badIdx;
+                                if (r.nextBoolean()) {
+                                    badIdx = -1 - r.nextInt(3); // 负数
+                                } else {
+                                    badIdx = arrayDeque.size() + r.nextInt(3) + 1; // 超界
+                                }
+                                Integer actual = arrayDeque.get(badIdx);
+                                log.append(i).append(": get(").append(badIdx).append(") -> ").append(actual).append(" (非法)\n");
+                                assertNull(actual, errMsg("非法索引 get 应返回 null", i, log, arrayDeque, oracle));
+                            }
+                        }
+                        break; }
+                }
+            } catch (AssertionError e) {
+                System.err.println("❌ 在操作 " + i + " 发生断言失败: " + e.getMessage());
+                System.err.println("---- 操作日志 (最近 50 条) ----");
+                printLastLines(log.toString(), 50);
+                System.err.println("---- 当前 Deque 内容 ----");
+                printDequeContents(arrayDeque);
+                System.err.println("---- Oracle (LinkedList) 内容 ----");
+                System.err.println(oracle);
+                throw e; // 继续抛出以让测试框架标红
+            } catch (Exception ex) {
+                System.err.println("💥 在操作 " + i + " 发生异常: " + ex);
+                System.err.println("操作日志:");
+                printLastLines(log.toString(), 50);
+                throw ex;
+            }
+        }
+        System.out.println("✅ get 随机测试完成, 最终 size=" + arrayDeque.size());
+    }
+
+    // 调试辅助: 打印最后 n 行日志
+    private void printLastLines(String all, int n) {
+        String[] lines = all.split("\n");
+        int start = Math.max(0, lines.length - n);
+        for (int i = start; i < lines.length; i++) {
+            System.err.println(lines[i]);
+        }
+    }
+
+    // 调试辅助: 打印当前 deque 内容(使用 get)
+    private void printDequeContents(ArrayDeque<Integer> d) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < d.size(); i++) {
+            sb.append(d.get(i));
+            if (i + 1 < d.size()) sb.append(", ");
+        }
+        sb.append(']');
+        System.err.println(sb);
+    }
+
+    // 统一错误信息构造
+    private String errMsg(String msg, int opIndex, StringBuilder log, ArrayDeque<Integer> d, LinkedList<Integer> oracle) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(msg).append(" | op=").append(opIndex)
+          .append(" | size=").append(d.size()).append('\n');
+        sb.append("当前内容:");
+        for (int i = 0; i < d.size(); i++) {
+            sb.append(i == 0 ? " [" : "").append(d.get(i));
+            if (i + 1 < d.size()) sb.append(", ");
+            else sb.append("]\n");
+        }
+        sb.append("Oracle: ").append(oracle).append('\n');
+        sb.append("最近日志: \n");
+        String[] lines = log.toString().split("\n");
+        int start = Math.max(0, lines.length - 20);
+        for (int i = start; i < lines.length; i++) {
+            sb.append(lines[i]).append('\n');
+        }
+        return sb.toString();
+    }
+}
