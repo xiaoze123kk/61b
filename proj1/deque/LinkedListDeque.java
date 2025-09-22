@@ -4,7 +4,7 @@ import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Deque<T> , Iterable<T> {
     private Node sentinel;
-    int size;
+    private int size;
     private Node last;
 
     private class Node {
@@ -228,7 +228,7 @@ public class LinkedListDeque<T> implements Deque<T> , Iterable<T> {
      * @param p
      * @return
      */
-    public T getRecursive(int index, Node p) {
+    private T getRecursive(int index, Node p) {
         if (index < 0 || index >= size || isEmpty()) {
             return null;
         }

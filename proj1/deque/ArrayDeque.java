@@ -85,7 +85,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      *
      * @return
      */
-    public int getFirstPre() {
+    private int getFirstPre() {
         return (nextFirst + 1) % array.length;
     }
 
@@ -94,7 +94,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      *
      * @return
      */
-    public T getRemoveFirst() {
+    private T getRemoveFirst() {
         int firstPre = getFirstPre();
         T remove = array[firstPre];
         array[firstPre] = null;
@@ -123,7 +123,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     }
 
-    public int getLastPre() {
+    private int getLastPre() {
         return (nextLast - 1 + array.length) % array.length;
     }
 
@@ -132,7 +132,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      *
      * @return
      */
-    public T getRemoveLast() {
+    private T getRemoveLast() {
         int lastPre = getLastPre();
         T remove = array[lastPre];
         array[lastPre] = null;
@@ -239,7 +239,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return true;
     }
 
-    public void resize(int capacity) {
+    private void resize(int capacity) {
         T[] newArray = (T[]) new Object[capacity];
         if (nextFirst < nextLast) {
             System.arraycopy(array, nextFirst + 1, newArray, 0, size);
@@ -257,14 +257,14 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     /**
      * 动态改变数组大小(变小).
      */
-    public void resizeSmall(int capacity) {
+    private void resizeSmall(int capacity) {
         resize(capacity);
     }
 
     /**
      * 动态改变数组大小（变大）.
      */
-    public void resizeBig(int capacity) {
+    private void resizeBig(int capacity) {
         resize(capacity);
     }
 
