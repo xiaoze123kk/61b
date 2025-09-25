@@ -51,7 +51,7 @@ public class LinkedListDeque<T> implements Deque<T> , Iterable<T> {
         size++;
     }
 
-    
+
     /**
      * Returns the number of items in the deque.
      *
