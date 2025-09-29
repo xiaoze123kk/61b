@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class MyHashMap<K, V> implements Map61B<K, V> {
 
-    int itemsSize;
+    private int itemsSize;
     private Collection<Node>[] buckets;
     private int bucketsSize;
     private double loadSetFactor;
