@@ -19,22 +19,20 @@ import java.util.Formatter;
 import java.util.List;
 
 
-/** Assorted utilities.
+/** 各种实用工具。
  *
- * Give this file a good read as it provides several useful utility functions
- * to save you some time.
+ * 仔细阅读本文件，它提供了若干有用的工具函数，可为你节省时间。
  *
- *  @author P. N. Hilfinger
+ *  作者：P. N. Hilfinger
  */
 class Utils {
 
-    /** The length of a complete SHA-1 UID as a hexadecimal numeral. */
+    /** 以十六进制表示的完整 SHA-1 UID 的长度。 */
     static final int UID_LENGTH = 40;
 
-    /* SHA-1 HASH VALUES. */
+    /* SHA-1 哈希值 */
 
-    /** Returns the SHA-1 hash of the concatenation of VALS, which may
-     *  be any mixture of byte arrays and Strings. */
+    /** 返回将 VALS 连接后计算得到的 SHA-1 哈希。VALS 可以是字节数组和字符串的任意混合。 */
     static String sha1(Object... vals) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
@@ -57,18 +55,15 @@ class Utils {
         }
     }
 
-    /** Returns the SHA-1 hash of the concatenation of the strings in
-     *  VALS. */
+    /** 返回将 VALS 中的字符串连接后得到的 SHA-1 哈希。 */
     static String sha1(List<Object> vals) {
         return sha1(vals.toArray(new Object[vals.size()]));
     }
 
-    /* FILE DELETION */
+    /* 文件删除 */
 
-    /** Deletes FILE if it exists and is not a directory.  Returns true
-     *  if FILE was deleted, and false otherwise.  Refuses to delete FILE
-     *  and throws IllegalArgumentException unless the directory designated by
-     *  FILE also contains a directory named .gitlet. */
+    /** 如果 FILE 存在且不是目录，则删除之。若成功删除返回 true，否则返回 false。
+     *  若 FILE 所在目录不包含名为 .gitlet 的目录，则拒绝删除并抛出 IllegalArgumentException。 */
     static boolean restrictedDelete(File file) {
         if (!(new File(file.getParentFile(), ".gitlet")).isDirectory()) {
             throw new IllegalArgumentException("not .gitlet working directory");
@@ -80,19 +75,17 @@ class Utils {
         }
     }
 
-    /** Deletes the file named FILE if it exists and is not a directory.
-     *  Returns true if FILE was deleted, and false otherwise.  Refuses
-     *  to delete FILE and throws IllegalArgumentException unless the
-     *  directory designated by FILE also contains a directory named .gitlet. */
+    /** 如果名为 FILE 的文件存在且不是目录，则删除之。
+     *  若成功删除返回 true，否则返回 false。若 FILE 所在目录不包含名为 .gitlet 的目录，
+     *  则拒绝删除并抛出 IllegalArgumentException。 */
     static boolean restrictedDelete(String file) {
         return restrictedDelete(new File(file));
     }
 
-    /* READING AND WRITING FILE CONTENTS */
+    /* 读取与写入文件内容 */
 
-    /** Return the entire contents of FILE as a byte array.  FILE must
-     *  be a normal file.  Throws IllegalArgumentException
-     *  in case of problems. */
+    /** 以字节数组形式返回 FILE 的全部内容。FILE 必须是普通文件。
+     *  如有问题则抛出 IllegalArgumentException。 */
     static byte[] readContents(File file) {
         if (!file.isFile()) {
             throw new IllegalArgumentException("must be a normal file");
@@ -104,17 +97,14 @@ class Utils {
         }
     }
 
-    /** Return the entire contents of FILE as a String.  FILE must
-     *  be a normal file.  Throws IllegalArgumentException
-     *  in case of problems. */
+    /** 以字符串形式返回 FILE 的全部内容。FILE 必须是普通文件。
+     *  如有问题则抛出 IllegalArgumentException。 */
     static String readContentsAsString(File file) {
         return new String(readContents(file), StandardCharsets.UTF_8);
     }
 
-    /** Write the result of concatenating the bytes in CONTENTS to FILE,
-     *  creating or overwriting it as needed.  Each object in CONTENTS may be
-     *  either a String or a byte array.  Throws IllegalArgumentException
-     *  in case of problems. */
+    /** 将 CONTENTS 中的字节按顺序连接后的结果写入 FILE，必要时创建或覆盖。
+     *  CONTENTS 中的每个对象可以是 String 或字节数组。如有问题则抛出 IllegalArgumentException。 */
     static void writeContents(File file, Object... contents) {
         try {
             if (file.isDirectory()) {
@@ -136,8 +126,8 @@ class Utils {
         }
     }
 
-    /** Return an object of type T read from FILE, casting it to EXPECTEDCLASS.
-     *  Throws IllegalArgumentException in case of problems. */
+    /** 从 FILE 读取对象，返回类型为 T，并强制转换为 EXPECTEDCLASS。
+     *  如有问题则抛出 IllegalArgumentException。 */
     static <T extends Serializable> T readObject(File file,
                                                  Class<T> expectedClass) {
         try {
@@ -152,14 +142,14 @@ class Utils {
         }
     }
 
-    /** Write OBJ to FILE. */
+    /** 将 OBJ 写入 FILE。 */
     static void writeObject(File file, Serializable obj) {
         writeContents(file, serialize(obj));
     }
 
-    /* DIRECTORIES */
+    /* 目录 */
 
-    /** Filter out all but plain files. */
+    /** 仅保留普通文件的过滤器。 */
     private static final FilenameFilter PLAIN_FILES =
         new FilenameFilter() {
             @Override
@@ -168,9 +158,8 @@ class Utils {
             }
         };
 
-    /** Returns a list of the names of all plain files in the directory DIR, in
-     *  lexicographic order as Java Strings.  Returns null if DIR does
-     *  not denote a directory. */
+    /** 返回目录 DIR 中所有普通文件的文件名列表（Java 字符串），按字典序排序。
+     *  如果 DIR 不是目录则返回 null。 */
     static List<String> plainFilenamesIn(File dir) {
         String[] files = dir.list(PLAIN_FILES);
         if (files == null) {
@@ -181,33 +170,30 @@ class Utils {
         }
     }
 
-    /** Returns a list of the names of all plain files in the directory DIR, in
-     *  lexicographic order as Java Strings.  Returns null if DIR does
-     *  not denote a directory. */
+    /** 返回目录 DIR 中所有普通文件的文件名列表（Java 字符串），按字典序排序。
+     *  如果 DIR 不是目录则返回 null。 */
     static List<String> plainFilenamesIn(String dir) {
         return plainFilenamesIn(new File(dir));
     }
 
-    /* OTHER FILE UTILITIES */
+    /* 其他文件工具 */
 
-    /** Return the concatentation of FIRST and OTHERS into a File designator,
-     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
-     *  method. */
+    /** 将 FIRST 与 OTHERS 拼接成一个 File 指示器，
+     *  类似于 java.nio.file.Paths.get(String, String[]) 方法。 */
     static File join(String first, String... others) {
         return Paths.get(first, others).toFile();
     }
 
-    /** Return the concatentation of FIRST and OTHERS into a File designator,
-     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
-     *  method. */
+    /** 将 FIRST 与 OTHERS 拼接成一个 File 指示器，
+     *  类似于 java.nio.file.Paths.get(String, String[]) 方法。 */
     static File join(File first, String... others) {
         return Paths.get(first.getPath(), others).toFile();
     }
 
 
-    /* SERIALIZATION UTILITIES */
+    /* 序列化工具 */
 
-    /** Returns a byte array containing the serialized contents of OBJ. */
+    /** 返回包含 OBJ 序列化内容的字节数组。 */
     static byte[] serialize(Serializable obj) {
         try {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -222,16 +208,14 @@ class Utils {
 
 
 
-    /* MESSAGES AND ERROR REPORTING */
+    /* 消息与错误报告 */
 
-    /** Return a GitletException whose message is composed from MSG and ARGS as
-     *  for the String.format method. */
+    /** 返回一个 GitletException，其消息由 MSG 和 ARGS 按照 String.format 的方式格式化而成。 */
     static GitletException error(String msg, Object... args) {
         return new GitletException(String.format(msg, args));
     }
 
-    /** Print a message composed from MSG and ARGS as for the String.format
-     *  method, followed by a newline. */
+    /** 按照 String.format 的方式用 MSG 和 ARGS 组合并打印消息，随后输出一个换行。 */
     static void message(String msg, Object... args) {
         System.out.printf(msg, args);
         System.out.println();
