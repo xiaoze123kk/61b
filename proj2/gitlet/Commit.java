@@ -2,11 +2,11 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static gitlet.Repository.COMMITS_DIR;
+
+import static gitlet.CommonFile.gitletDirOrDie;
 import static gitlet.Utils.*;
 
 /**
@@ -47,6 +47,7 @@ public class Commit implements Serializable {
      */
     private String MparentCommit;
 
+    //just for init
     Commit(String logMessage) {
         blobsMap = new TreeMap<>();
         timestamp = 0;
@@ -56,13 +57,130 @@ public class Commit implements Serializable {
         commitHash = sha1(serialize(this));
     }
 
+    public Commit() {
+    }
+
+
     /**
      * 写入commit
      */
-    public void writeIn() {
-        File hash_File = join(COMMITS_DIR, commitHash);
+    public void writeInCommits() {
+        File gitlet = gitletDirOrDie();
+        File COMMIT_DIR = join(gitlet, "commits");
+        File hash_File = join(COMMIT_DIR, commitHash);
         writeObject(hash_File, this);
     }
 
 
+    /**
+     * 获取
+     *
+     * @return commitHash
+     */
+    public String getCommitHash() {
+        return commitHash;
+    }
+
+    /**
+     * 设置
+     *
+     * @param commitHash
+     */
+    public void setCommitHash(String commitHash) {
+        this.commitHash = commitHash;
+    }
+
+    /**
+     * 获取
+     *
+     * @return message
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * 设置
+     *
+     * @param message
+     */
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    /**
+     * 获取
+     *
+     * @return timestamp
+     */
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    /**
+     * 设置
+     *
+     * @param timestamp
+     */
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    /**
+     * 获取
+     *
+     * @return blobsMap
+     */
+    public Map<String, String> getBlobsMap() {
+        return blobsMap;
+    }
+
+    /**
+     * 设置
+     *
+     * @param blobsMap
+     */
+    public void setBlobsMap(Map<String, String> blobsMap) {
+        this.blobsMap = blobsMap;
+    }
+
+    /**
+     * 获取
+     *
+     * @return parentCommit
+     */
+    public String getParentCommit() {
+        return parentCommit;
+    }
+
+    /**
+     * 设置
+     *
+     * @param parentCommit
+     */
+    public void setParentCommit(String parentCommit) {
+        this.parentCommit = parentCommit;
+    }
+
+    /**
+     * 获取
+     *
+     * @return MparentCommit
+     */
+    public String getMparentCommit() {
+        return MparentCommit;
+    }
+
+    /**
+     * 设置
+     *
+     * @param MparentCommit
+     */
+    public void setMparentCommit(String MparentCommit) {
+        this.MparentCommit = MparentCommit;
+    }
+
+    public String toString() {
+        return "Commit{commitHash = " + commitHash + ", message = " + message + ", timestamp = " + timestamp + ", blobsMap = " + blobsMap + ", parentCommit = " + parentCommit + ", MparentCommit = " + MparentCommit + "}";
+    }
 }

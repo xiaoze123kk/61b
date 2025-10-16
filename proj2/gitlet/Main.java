@@ -18,14 +18,18 @@ public class Main {
         // TODO：若用户输入的命令操作数数量或格式错误，打印 "Incorrect operands." 并退出。
         Repository repo = new Repository();
         // TODO：检测运行命令时所在目录是否存在 .gitlet，即在包含 .gitlet 的目录及其子目录下才能运行命令；
-        // 否则打印 "Not in an initialized Gitlet directory."，然后直接返回。
+        //  否则打印 "Not in an initialized Gitlet directory."，然后直接返回。
         switch(firstArg) {
             case "init":
-                // TODO：处理 `init` 命令
-                repo.Init();
+                repo.init();
                 break;
             case "add":
                 // TODO：处理 `add [filename]` 命令
+                if (args.length >= 3){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+
                 break;
             // TODO：补全其余命令
 
