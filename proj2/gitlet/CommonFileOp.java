@@ -8,7 +8,7 @@ public class CommonFileOp {
 
     /**
      * 找.gitlet所在的目录,从start开始递归向上寻找
-     *
+     * 存在返回.gitlet所在的文件目录，否则返回null
      * @param start
      * @return
      */
