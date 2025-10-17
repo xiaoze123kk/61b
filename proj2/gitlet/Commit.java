@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-import static gitlet.CommonFile.gitletDirOrDie;
+import static gitlet.CommonFileOp.gitletDirOrDie;
 import static gitlet.Utils.*;
 
 /**
@@ -16,12 +16,7 @@ import static gitlet.Utils.*;
  * @author TODO
  */
 public class Commit implements Serializable {
-    /**
-     * TODO：在此添加成员变量。
-     *
-     * 在这里列出 Commit 类的所有成员变量，并在其上方用有用的注释描述该变量代表什么、
-     * 以及该变量如何被使用。我们已经为 `message` 提供了一个示例。
-     */
+
     /**
      * 当前commit的哈希值
      */

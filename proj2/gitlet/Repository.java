@@ -3,7 +3,7 @@ package gitlet;
 import java.io.File;
 import java.util.Map;
 
-import static gitlet.CommonFile.findGitlet;
+import static gitlet.CommonFileOp.*;
 import static gitlet.Utils.*;
 
 
@@ -37,9 +37,10 @@ public class Repository {
 
     /**
      * 对init文件进行创建。
+     *
      * @param start
      */
-    private void initDir(File start){
+    private void initDir(File start) {
         /**
          * .gitlet 目录。
          */
@@ -66,22 +67,21 @@ public class Repository {
         REFS_DIR.mkdir();
         STAGING_DIR.mkdir();
 
-        File add = join(STAGING_DIR,"add");
-        File remove = join(STAGING_DIR,"remove");
+        File add = join(STAGING_DIR, "add");
+        File remove = join(STAGING_DIR, "remove");
 
         add.mkdir();
         remove.mkdir();
     }
 
 
-
     /**
      * init命令。
      */
-    public void init(){
+    public void init() {
         File start = new File(System.getProperty("user.dir"));
         //看当前目录及其父目录有没有.gitlet
-        if (findGitlet(start) != null){
+        if (findGitlet(start) != null) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         }
@@ -95,13 +95,44 @@ public class Repository {
         File commitsDir = join(curRepo, "commits");
         writeObject(join(commitsDir, origin.getCommitHash()), origin);
 
-        writeContents(join(curRepo,"HEAD"), "master");
+        writeContents(join(curRepo, "HEAD"), "master");
         File refsDir = join(curRepo, "refs");
-        writeContents(join(refsDir,"master"), origin.getCommitHash());
+        writeContents(join(refsDir, "master"), origin.getCommitHash());
     }
 
+    /**
+     * add命令
+     */
+    public void add(String filename) {
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+        //ok,在仓库下，开始找文件,得在当前的文件目录下找
+        File target = findTargetFile(filename, start);
+        if (target == null) {
+            System.out.println("File does not exist.");
+            System.exit(0);
+        }
+        //找到了文件，将这个文件的副本添加到暂存区
+        //文件的当前版本跟当前commit的版本一致，则不添加，并且如果此文件若是在
+        //staging area中，将其移除
+        String targetHash = sha1(readContents(target));
+        Commit curCommit = getCurCommit();
+        String oldHash = curCommit.getBlobsMap().get(filename);
+        //判断版本一致
+        if (oldHash != null && oldHash.equals(targetHash)) {
+            removeFrom(join(getSTAGING(), "add", target.getName()));
+            System.exit(0);
+        }
+        //如果该文件在待删除状态，将该文件从rm中移除
+        removeFrom(join(getSTAGING(), "remove", target.getName()));
 
-
+        File dir = join(getSTAGING(), "add");
+        copyTo(target, dir);
+    }
 
 
 }

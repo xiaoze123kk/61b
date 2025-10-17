@@ -25,11 +25,11 @@ public class Main {
                 break;
             case "add":
                 // TODO：处理 `add [filename]` 命令
-                if (args.length >= 3){
+                if (args.length != 2){
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
-
+                repo.add(args[1]);
                 break;
             // TODO：补全其余命令
 
