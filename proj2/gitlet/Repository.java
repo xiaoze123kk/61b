@@ -139,15 +139,30 @@ public class Repository {
      * @param msg
      */
     public void commit(String msg){
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
         //暂存区无文件，不commit
         if (getSTAGINGADD().listFiles() == null || getSTAGINGREMOVE().listFiles() == null){
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
-        Commit newCommit = getCurCommit();
-
-        
-
+        Commit newCommit =  Commit.fromParent(getCurCommit(), msg);
+        //找add文件夹里的内容并加入
+        newCommit.addFile(getSTAGINGADD());
+        //找remove文件夹里的内容并删除
+        newCommit.removeFile(getSTAGINGREMOVE());
+        //将commit写进commits
+        newCommit.computeMyHash();
+        writeObject(join(getCOMMITS(), newCommit.getCommitHash()),newCommit);
+        //更改头指针朝向
+        HeadChange(newCommit);
+        //删除暂存区里的文件
+        removeFrom(getSTAGINGADD());
+        removeFrom(getSTAGINGREMOVE());
 
     }
 

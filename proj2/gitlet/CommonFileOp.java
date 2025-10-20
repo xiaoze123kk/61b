@@ -192,5 +192,28 @@ public class CommonFileOp {
 
     }
 
+    /**
+     * 把文件写入blobs文件里
+     * @param file
+     */
+    public static void writeToBlobs(File file){
+        String HashCode = sha1(readContents(file));
+        File f = join(getBLOBS(),HashCode);
+        if (f.exists()){
+            return;
+        }
+        byte[] data = readContents(file);
+        writeContents(f,data);
+    }
+
+    /**
+     * 更改头指针的朝向
+     * @param c
+     */
+    public static void HeadChange(Commit c){
+        getHEAD().delete();
+        writeObject(getHEAD(),c);
+    }
+
 
 }

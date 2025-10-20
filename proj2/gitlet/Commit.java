@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-import static gitlet.CommonFileOp.gitletDirOrDie;
+import static gitlet.CommonFileOp.*;
 import static gitlet.Utils.*;
 
 /**
  * 表示一个 gitlet 提交（commit）对象。
- *  TODO：最好在此处简要描述该类在更高层面还做了什么。
+ *
  *
  * @author TODO
  */
@@ -178,4 +178,64 @@ public class Commit implements Serializable {
     public String toString() {
         return "Commit{commitHash = " + commitHash + ", message = " + message + ", timestamp = " + timestamp + ", blobsMap = " + blobsMap + ", parentCommit = " + parentCommit + ", MparentCommit = " + MparentCommit + "}";
     }
+
+    /**
+     * 把文件加入到当前commit中
+     * @param file
+     */
+    public void addFile(File file){
+        if (file.isFile()){
+            blobsMap.put(file.getName(), sha1(readContents(file)));
+            writeToBlobs(file);
+            return;
+        }
+        if (file.isDirectory()){
+            File[] children = file.listFiles();
+            if (children!= null){
+                for (File child : children){
+                    addFile(child);
+                }
+            }
+        }
+    }
+
+    /**
+     * 把对应文件删除（即从map中滚蛋）
+     * @param file
+     */
+    public void removeFile(File file){
+        if (file.isFile()){
+            blobsMap.remove(file.getName());
+        }
+        if (file.isDirectory()){
+            File[] children = file.listFiles();
+            if (children!= null) {
+                for (File child : children) {
+                    removeFile(child);
+                }
+            }
+        }
+    }
+
+    /**
+     * 算哈希值
+     */
+    public void computeMyHash(){
+        this.commitHash = sha1(serialize(this));
+    }
+
+    // 基于父提交创建新提交（不写盘）
+    public static Commit fromParent(Commit parent, String msg) {
+        Commit c = new Commit();
+        c.message = msg;
+        c.timestamp = System.currentTimeMillis();
+        c.parentCommit = parent == null ? null : parent.commitHash;
+        c.MparentCommit = null;
+        c.blobsMap = parent == null ? new TreeMap<>() : new TreeMap<>(parent.blobsMap);
+        c.commitHash = null;
+        // 先不算 hash，待应用 add/remove 后再算
+        return c;
+    }
+
+
 }

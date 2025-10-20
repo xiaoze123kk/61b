@@ -32,8 +32,14 @@ public class Main {
                 break;
             case "commit":
                 if (args.length != 2){
-                    System.out.println("Please enter a commit message.");
-                    System.exit(0);
+                    if (args.length == 1) {
+                        System.out.println("Please enter a commit message.");
+                        System.exit(0);
+                    }
+                    else {
+                        System.out.println("Incorrect operands.");
+                        System.exit(0);
+                    }
                 }
                 repo.commit(args[1]);
             // 该名称的命令不存在
