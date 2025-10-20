@@ -83,6 +83,23 @@ public class CommonFileOp {
     }
 
     /**
+     * 获取staging下的add文件目录
+     * @return
+     */
+    public static File getSTAGINGADD(){
+        return join(getSTAGING(),"add");
+    }
+
+    /**
+     * 获取staging下的remove文件目录
+     * @return
+     */
+    public static File getSTAGINGREMOVE(){
+        return join(getSTAGINGREMOVE(),"remove");
+    }
+
+
+    /**
      * 找到当前目录下的目标文件，找不到就返回null
      *
      * @param filename

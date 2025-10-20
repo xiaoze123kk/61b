@@ -24,15 +24,18 @@ public class Main {
                 repo.init();
                 break;
             case "add":
-                // TODO：处理 `add [filename]` 命令
                 if (args.length != 2){
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
                 repo.add(args[1]);
                 break;
-            // TODO：补全其余命令
-
+            case "commit":
+                if (args.length != 2){
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
+                repo.commit(args[1]);
             // 该名称的命令不存在
             default:
                 System.out.println("No command with that name exists.");

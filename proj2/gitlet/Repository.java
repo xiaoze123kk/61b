@@ -134,5 +134,23 @@ public class Repository {
         copyTo(target, dir);
     }
 
+    /**
+     * commit命令
+     * @param msg
+     */
+    public void commit(String msg){
+        //暂存区无文件，不commit
+        if (getSTAGINGADD().listFiles() == null || getSTAGINGREMOVE().listFiles() == null){
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
+        Commit newCommit = getCurCommit();
+
+        
+
+
+    }
+
+
 
 }
