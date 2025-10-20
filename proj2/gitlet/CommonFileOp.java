@@ -95,7 +95,7 @@ public class CommonFileOp {
      * @return
      */
     public static File getSTAGINGREMOVE(){
-        return join(getSTAGINGREMOVE(),"remove");
+        return join(getSTAGING(),"remove");
     }
 
 
@@ -207,12 +207,12 @@ public class CommonFileOp {
     }
 
     /**
-     * 更改头指针的朝向
-     * @param c
+     * 更改当前分支的头指针
      */
-    public static void HeadChange(Commit c){
-        getHEAD().delete();
-        writeObject(getHEAD(),c);
+    public static void HeadChange(Commit c) {
+        String branchName = readContentsAsString(getHEAD()).trim();
+        File branchFile = join(getREFS(), branchName);
+        writeContents(branchFile, c.getCommitHash());
     }
 
 
