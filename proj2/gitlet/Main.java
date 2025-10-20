@@ -1,5 +1,7 @@
 package gitlet;
 
+import java.util.Objects;
+
 /** Gitlet 的驱动类，Git 版本控制系统的一个子集。
  *  @author TODO
  */
@@ -31,8 +33,13 @@ public class Main {
                 repo.add(args[1]);
                 break;
             case "commit":
+                if (args.length == 2){
+                    if (Objects.equals(args[1], "")){
+                        System.out.println("Please enter a commit message.");
+                    }
+                }
                 if (args.length != 2){
-                    if (args.length == 1) {
+                    if (args.length == 1 ) {
                         System.out.println("Please enter a commit message.");
                         System.exit(0);
                     }
