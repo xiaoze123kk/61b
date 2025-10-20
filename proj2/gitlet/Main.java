@@ -36,6 +36,7 @@ public class Main {
                 if (args.length == 2){
                     if (Objects.equals(args[1], "")){
                         System.out.println("Please enter a commit message.");
+                        System.exit(0);
                     }
                 }
                 if (args.length != 2){
