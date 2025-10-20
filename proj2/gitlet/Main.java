@@ -42,6 +42,7 @@ public class Main {
                     }
                 }
                 repo.commit(args[1]);
+                break;
             // 该名称的命令不存在
             default:
                 System.out.println("No command with that name exists.");

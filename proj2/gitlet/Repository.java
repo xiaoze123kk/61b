@@ -145,8 +145,12 @@ public class Repository {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
-        //暂存区无文件，不commit
-        if (getSTAGINGADD().listFiles() == null || getSTAGINGREMOVE().listFiles() == null){
+        // 暂存区均为空时，不允许提交
+        File[] addFiles = getSTAGINGADD().listFiles();
+        File[] rmFiles = getSTAGINGREMOVE().listFiles();
+        boolean addEmpty = (addFiles == null || addFiles.length == 0);
+        boolean rmEmpty = (rmFiles == null || rmFiles.length == 0);
+        if (addEmpty && rmEmpty){
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
