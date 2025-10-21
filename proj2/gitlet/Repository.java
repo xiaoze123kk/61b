@@ -224,7 +224,7 @@ public class Repository {
 
         Commit cur = getCurCommit();
         //循环打印信息
-        while (cur.getParentCommit()!=null){
+        while (true){
             System.out.println("===");
             System.out.println("commit" + " " + cur.getCommitHash());
             //如果存在合并的父提交,加一行
@@ -236,6 +236,9 @@ public class Repository {
             System.out.println(formatted);
             System.out.println(cur.getMessage());
             //打印完后向前遍历
+            if (cur.getParentCommit() == null){
+                break;
+            }
             cur = readObject(join(getCOMMITS(),cur.getParentCommit()),Commit.class);
         }
 
