@@ -9,6 +9,7 @@ public class CommonFileOp {
     /**
      * 找.gitlet所在的目录,从start开始递归向上寻找
      * 存在返回.gitlet所在的文件目录，否则返回null
+     *
      * @param start
      * @return
      */
@@ -84,18 +85,20 @@ public class CommonFileOp {
 
     /**
      * 获取staging下的add文件目录
+     *
      * @return
      */
-    public static File getSTAGINGADD(){
-        return join(getSTAGING(),"add");
+    public static File getSTAGINGADD() {
+        return join(getSTAGING(), "add");
     }
 
     /**
      * 获取staging下的remove文件目录
+     *
      * @return
      */
-    public static File getSTAGINGREMOVE(){
-        return join(getSTAGING(),"remove");
+    public static File getSTAGINGREMOVE() {
+        return join(getSTAGING(), "remove");
     }
 
 
@@ -170,20 +173,21 @@ public class CommonFileOp {
     /**
      * 将文件(文件夹)从暂存区中的add或者rm目录下删除
      * 补充：发现这个函数很通用，纯粹的删除就完了
+     *
      * @param target (add文件夹中的目标文件)
      */
     public static void removeFrom(File target) {
         if (!target.exists()) {
             return;
         }
-        if (target.isFile()){
+        if (target.isFile()) {
             target.delete();
             return;
         }
-        if (target.isDirectory()){
+        if (target.isDirectory()) {
             File[] children = target.listFiles();
             if (children != null) {
-                for (File child: children){
+                for (File child : children) {
                     removeFrom(child);
                 }
             }
@@ -194,16 +198,17 @@ public class CommonFileOp {
 
     /**
      * 把文件写入blobs文件里
+     *
      * @param file
      */
-    public static void writeToBlobs(File file){
+    public static void writeToBlobs(File file) {
         String HashCode = sha1(readContents(file));
-        File f = join(getBLOBS(),HashCode);
-        if (f.exists()){
+        File f = join(getBLOBS(), HashCode);
+        if (f.exists()) {
             return;
         }
         byte[] data = readContents(file);
-        writeContents(f,data);
+        writeContents(f, data);
     }
 
     /**
@@ -213,6 +218,14 @@ public class CommonFileOp {
         String branchName = readContentsAsString(getHEAD()).trim();
         File branchFile = join(getREFS(), branchName);
         writeContents(branchFile, c.getCommitHash());
+    }
+
+    /**
+     * 获取blobs里面的某一个文件
+     * @param hashName
+     */
+    public static File getBlob(String hashName){
+        return join(getBLOBS(),hashName);
     }
 
 

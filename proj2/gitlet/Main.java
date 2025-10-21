@@ -11,7 +11,6 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
-        // TODO：如果 args 为空怎么办？
         if (args.length==0){
             System.out.println("Please enter a command.");
             System.exit(0);
@@ -50,6 +49,13 @@ public class Main {
                     }
                 }
                 repo.commit(args[1]);
+                break;
+            case "rm":
+                if (args.length!=2){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.remove(args[1]);
                 break;
             // 该名称的命令不存在
             default:

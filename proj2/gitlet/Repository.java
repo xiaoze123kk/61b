@@ -167,9 +167,42 @@ public class Repository {
         //删除暂存区里的文件
         removeFrom(getSTAGINGADD());
         removeFrom(getSTAGINGREMOVE());
-
     }
 
+    /**
+     * remove命令
+     */
+    public void remove(String filename){
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+        //判断是否在add暂存区
+        {
+            File target = join(getSTAGINGADD(), filename);
+            if (target.exists()) {
+                removeFrom(target);
+                return;
+            }
+        }
+        //判断是否被当前的commit跟踪
+        Commit curCommit = getCurCommit();
+        if (curCommit.getBlobsMap().containsKey(filename)){
+            File blob = getBlob(curCommit.getBlobsMap().get(filename));
+            copyTo(blob,getSTAGINGREMOVE());
+            //ok,在仓库下，开始找文件,得在当前的文件目录下找
+            File target = findTargetFile(filename, start);
+            //工作目录中存在该文件,则删除它
+            if (target != null){
+                removeFrom(target);
+            }
+            return;
+        }
+        //既不在暂存区内，也不在当前commit中被跟踪
+        System.out.println("No reason to remove the file.");
+    }
 
 
 }
