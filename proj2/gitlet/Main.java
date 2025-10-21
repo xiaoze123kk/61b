@@ -71,7 +71,13 @@ public class Main {
                 }
                 repo.global_log();
                 break;
-
+            case "find":
+                if (args.length != 2){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.find(args[1]);
+                break;
             // 该名称的命令不存在
             default:
                 System.out.println("No command with that name exists.");

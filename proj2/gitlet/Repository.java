@@ -1,7 +1,5 @@
 package gitlet;
 
-import edu.princeton.cs.algs4.StdOut;
-
 import java.io.File;
 import java.util.Date;
 import java.util.List;
@@ -276,7 +274,32 @@ public class Repository {
 
     }
 
+    /**
+     * find命令
+     * @param msg
+     */
+    public void find(String msg){
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+        boolean hasId = false;
+        List<String> filenames = plainFilenamesIn(getCOMMITS());
+        for (int i = 0; i < filenames.size(); i++) {
+            Commit cur = readObject(join(getCOMMITS(), filenames.get(i)), Commit.class);
+            if (cur.getMessage().equals(msg)){
+                System.out.println(cur.getCommitHash());
+                hasId = true;
+            }
+        }
+        //如果没有这样的提交信息，输出错误信息
+        if (!hasId){
+            System.out.println("Found no commit with that message.");
+            System.exit(0);
+        }
 
-
+    }
 
 }
