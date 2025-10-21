@@ -235,7 +235,7 @@ public class Repository {
             String formatted = String.format("Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
             System.out.println(formatted);
             System.out.println(cur.getMessage());
-            System.out.println("\n");
+            System.out.println();
             //打印完后向前遍历
             if (cur.getParentCommit() == null){
                 break;
