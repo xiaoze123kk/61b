@@ -64,6 +64,14 @@ public class Main {
                 }
                 repo.log();
                 break;
+            case "global-log":
+                if (args.length != 1){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.global_log();
+                break;
+
             // 该名称的命令不存在
             default:
                 System.out.println("No command with that name exists.");

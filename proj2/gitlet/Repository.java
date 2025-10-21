@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.StdOut;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static gitlet.CommonFileOp.*;
@@ -241,6 +242,36 @@ public class Repository {
                 break;
             }
             cur = readObject(join(getCOMMITS(),cur.getParentCommit()),Commit.class);
+        }
+
+    }
+
+    /**
+     * global-log命令
+     */
+    public void global_log(){
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+
+        List<String> filenames = plainFilenamesIn(getCOMMITS());
+        //遍历打印log信息
+        for (int i = 0; i < filenames.size(); i++) {
+            Commit cur = readObject(join(getCOMMITS(), filenames.get(i)), Commit.class);
+            System.out.println("===");
+            System.out.println("commit" + " " + cur.getCommitHash());
+            //如果存在合并的父提交,加一行
+            if (cur.getMparentCommit()!=null){
+                System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
+            }
+            Date date = new Date(cur.getTimestamp());
+            String formatted = String.format("Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
+            System.out.println(formatted);
+            System.out.println(cur.getMessage());
+            System.out.println();
         }
 
     }
