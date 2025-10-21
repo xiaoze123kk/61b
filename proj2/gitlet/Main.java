@@ -57,6 +57,12 @@ public class Main {
                 }
                 repo.remove(args[1]);
                 break;
+            case "log":
+                if (args.length!=1){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.log();
             // 该名称的命令不存在
             default:
                 System.out.println("No command with that name exists.");

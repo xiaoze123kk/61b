@@ -1,6 +1,9 @@
 package gitlet;
 
+import edu.princeton.cs.algs4.StdOut;
+
 import java.io.File;
+import java.util.Date;
 import java.util.Map;
 
 import static gitlet.CommonFileOp.*;
@@ -207,6 +210,38 @@ public class Repository {
         //既不在暂存区内，也不在当前commit中被跟踪
         System.out.println("No reason to remove the file.");
     }
+
+    /**
+     * log命令
+     */
+    public void log(){
+        File start = new File(System.getProperty("user.dir"));
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+
+        Commit cur = getCurCommit();
+        //循环打印信息
+        while (cur.getParentCommit()!=null){
+            System.out.println("===");
+            System.out.println("commit" + " " + cur.getCommitHash());
+            //如果存在合并的父提交,加一行
+            if (cur.getMparentCommit()!=null){
+                System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
+            }
+            Date date = new Date(cur.getTimestamp());
+            String formatted = String.format("Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
+            System.out.println(formatted);
+            System.out.println(cur.getMessage());
+            //打印完后向前遍历
+            cur = readObject(join(getCOMMITS(),cur.getParentCommit()),Commit.class);
+        }
+
+    }
+
+
 
 
 }
