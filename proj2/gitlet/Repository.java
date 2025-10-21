@@ -190,11 +190,15 @@ public class Repository {
         //判断是否被当前的commit跟踪
         Commit curCommit = getCurCommit();
         if (curCommit.getBlobsMap().containsKey(filename)){
-            File blob = getBlob(curCommit.getBlobsMap().get(filename));
-            copyTo(blob,getSTAGINGREMOVE());
-            //ok,在仓库下，开始找文件,得在当前的文件目录下找
+            // 在 staging/remove 放入以文件名命名的删除标记，提交时按名称移除跟踪
+            File rmMarker = join(getSTAGINGREMOVE(), filename);
+            File parentDir = rmMarker.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            writeContents(rmMarker, "");
+            // 工作区存在该文件则删除
             File target = findTargetFile(filename, start);
-            //工作目录中存在该文件,则删除它
             if (target != null){
                 removeFrom(target);
             }
