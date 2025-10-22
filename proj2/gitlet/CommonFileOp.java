@@ -101,6 +101,14 @@ public class CommonFileOp {
         return join(getSTAGING(), "remove");
     }
 
+    /**
+     * 获取trees目录
+     * @return
+     */
+    public static File getTREES_DIR() {
+        return join(gitletDirOrDie(), "trees");
+    }
+
 
     /**
      * 找到当前目录下的目标文件，找不到就返回null
@@ -217,7 +225,7 @@ public class CommonFileOp {
     public static void HeadChange(Commit c) {
         String branchName = readContentsAsString(getHEAD()).trim();
         File branchFile = join(getREFS(), branchName);
-        writeContents(branchFile, c.getCommitHash());
+        writeContents(branchFile, c.getCommitId());
     }
 
     /**

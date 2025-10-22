@@ -3,7 +3,7 @@ package gitlet;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 import static gitlet.CommonFileOp.*;
 import static gitlet.Utils.*;
@@ -15,25 +15,15 @@ import static gitlet.Utils.*;
  */
 public class Repository {
 
-    /**
-     * 当前工作目录。
-     */
+    /** 当前工作目录。 */
     public static final File CWD = new File(System.getProperty("user.dir"));
-    /**
-     * .gitlet 目录。
-     */
+    /** .gitlet 目录。 */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    /**
-     * 当前分支
-     */
+    /** 当前分支 */
     private Branch curBranch;
-    /**
-     * 分支map表
-     */
-    private Map<String, Branch> BranchMap;
-    /**
-     * 当前头指针
-     */
+    /** 分支map表 */
+    private java.util.Map<String, Branch> BranchMap;
+    /** 当前头指针 */
     private Commit HEAD;
 
 
@@ -63,11 +53,16 @@ public class Repository {
          * staging 目录
          */
         File STAGING_DIR = join(GITLET_DIR, "staging");
+        /**
+         * trees 目录
+         */
+        File TREES_DIR = join(GITLET_DIR, "trees");
         GITLET_DIR.mkdir();
         BLOBS_DIR.mkdir();
         COMMITS_DIR.mkdir();
         REFS_DIR.mkdir();
         STAGING_DIR.mkdir();
+        TREES_DIR.mkdir();
 
         File add = join(STAGING_DIR, "add");
         File remove = join(STAGING_DIR, "remove");
@@ -95,11 +90,11 @@ public class Repository {
 
         // 用动态的仓库根写入所有文件
         File commitsDir = join(curRepo, "commits");
-        writeObject(join(commitsDir, origin.getCommitHash()), origin);
+        writeObject(join(commitsDir, origin.getCommitId()), origin);
 
         writeContents(join(curRepo, "HEAD"), "master");
         File refsDir = join(curRepo, "refs");
-        writeContents(join(refsDir, "master"), origin.getCommitHash());
+        writeContents(join(refsDir, "master"), origin.getCommitId());
     }
 
     /**
@@ -123,7 +118,7 @@ public class Repository {
         //staging area中，将其移除
         String targetHash = sha1(readContents(target));
         Commit curCommit = getCurCommit();
-        String oldHash = curCommit.getBlobsMap().get(filename);
+        String oldHash = curCommit.getBlobHash(filename);
         //判断版本一致
         if (oldHash != null && oldHash.equals(targetHash)) {
             removeFrom(join(getSTAGING(), "add", target.getName()));
@@ -163,7 +158,7 @@ public class Repository {
         newCommit.removeFile(getSTAGINGREMOVE());
         //将commit写进commits
         newCommit.computeMyHash();
-        writeObject(join(getCOMMITS(), newCommit.getCommitHash()),newCommit);
+        writeObject(join(getCOMMITS(), newCommit.getCommitId()),newCommit);
         //更改头指针朝向
         HeadChange(newCommit);
         //删除暂存区里的文件
@@ -191,7 +186,7 @@ public class Repository {
         }
         //判断是否被当前的commit跟踪
         Commit curCommit = getCurCommit();
-        if (curCommit.getBlobsMap().containsKey(filename)){
+        if (curCommit.getBlobHash(filename) != null){
             // 在 staging/remove 放入以文件名命名的删除标记，提交时按名称移除跟踪
             File rmMarker = join(getSTAGINGREMOVE(), filename);
             File parentDir = rmMarker.getParentFile();
@@ -225,13 +220,13 @@ public class Repository {
         //循环打印信息
         while (true){
             System.out.println("===");
-            System.out.println("commit" + " " + cur.getCommitHash());
+            System.out.println("commit" + " " + cur.getCommitId());
             //如果存在合并的父提交,加一行
             if (cur.getMparentCommit()!=null){
                 System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
             }
             Date date = new Date(cur.getTimestamp());
-            String formatted = String.format("Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
+            String formatted = String.format(Locale.US, "Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
             System.out.println(formatted);
             System.out.println(cur.getMessage());
             System.out.println();
@@ -260,13 +255,13 @@ public class Repository {
         for (int i = 0; i < filenames.size(); i++) {
             Commit cur = readObject(join(getCOMMITS(), filenames.get(i)), Commit.class);
             System.out.println("===");
-            System.out.println("commit" + " " + cur.getCommitHash());
+            System.out.println("commit" + " " + cur.getCommitId());
             //如果存在合并的父提交,加一行
             if (cur.getMparentCommit()!=null){
                 System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
             }
             Date date = new Date(cur.getTimestamp());
-            String formatted = String.format("Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
+            String formatted = String.format(Locale.US, "Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
             System.out.println(formatted);
             System.out.println(cur.getMessage());
             System.out.println();
@@ -290,7 +285,7 @@ public class Repository {
         for (int i = 0; i < filenames.size(); i++) {
             Commit cur = readObject(join(getCOMMITS(), filenames.get(i)), Commit.class);
             if (cur.getMessage().equals(msg)){
-                System.out.println(cur.getCommitHash());
+                System.out.println(cur.getCommitId());
                 hasId = true;
             }
         }
