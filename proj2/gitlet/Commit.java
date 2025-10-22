@@ -73,44 +73,28 @@ public class Commit implements Serializable {
     }
 
     /**
-     * 将暂存区文件加入到当前提交的 Tree 中（file 指向暂存区 add 目录或其中的文件）。
+     * 将工作区中的某个“文件路径”加入到当前提交的 Tree 中。
+     * 路径使用系统分隔符传入，内部会规范为 '/'。
      */
-    public void addFile(File file){
-        if (file == null || !file.exists()) return;
-        if (file.isFile()){
-            String blobHash = sha1(readContents(file));
-            writeToBlobs(file);
-            // 暂存区中只有文件名一层，直接使用文件名作为路径
-            treeHash = Tree.putFile(treeHash, file.getName(), blobHash);
-            return;
-        }
-        if (file.isDirectory()){
-            File[] children = file.listFiles();
-            if (children!= null){
-                for (File child : children){
-                    addFile(child);
-                }
-            }
-        }
+    public void addFile(String path){
+        if (path == null || path.isEmpty()) return;
+        String norm = normalizePath(path);
+        File f = new File(norm);
+        if (!f.exists() || !f.isFile()) return;
+        String blobHash = sha1(readContents(f));
+        writeToBlobs(f);
+        // 使用规范化后的相对路径写入目录树
+        treeHash = Tree.putFile(treeHash, norm, blobHash);
     }
 
     /**
-     * 把对应文件从当前提交的 Tree 中删除（file 指向暂存区 remove 目录或其中的文件）。
+     * 从当前提交的 Tree 中删除对应的“路径”（文件或整个目录）。
+     * 路径使用系统分隔符传入，内部会规范为 '/'。
      */
-    public void removeFile(File file){
-        if (file == null || !file.exists()) return;
-        if (file.isFile()){
-            treeHash = Tree.removePath(treeHash, file.getName());
-            return;
-        }
-        if (file.isDirectory()){
-            File[] children = file.listFiles();
-            if (children!= null) {
-                for (File child : children) {
-                    removeFile(child);
-                }
-            }
-        }
+    public void removeFile(String path){
+        if (path == null || path.isEmpty()) return;
+        String norm = normalizePath(path);
+        treeHash = Tree.removePath(treeHash, norm);
     }
 
     /** 重新计算并设置本次提交的哈希 */
@@ -128,5 +112,16 @@ public class Commit implements Serializable {
         c.treeHash = parent == null ? Tree.emptyTreeHash() : parent.treeHash;
         c.commitId = null; // 待变更后再计算
         return c;
+    }
+
+    /** 将任意平台的路径规范为以 '/' 分隔的相对路径，去除开头的 './' 或前导分隔符。 */
+    private static String normalizePath(String path) {
+        String p = path.replace("\\", "/");
+        while (p.startsWith("./")) p = p.substring(2);
+        // 合并重复分隔符
+        p = p.replaceAll("/+", "/");
+        // 去掉前导 '/'
+        if (p.startsWith("/")) p = p.substring(1);
+        return p;
     }
 }

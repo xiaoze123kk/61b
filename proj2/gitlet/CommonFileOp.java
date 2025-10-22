@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import static gitlet.Utils.*;
 
@@ -103,6 +105,7 @@ public class CommonFileOp {
 
     /**
      * 获取trees目录
+     *
      * @return
      */
     public static File getTREES_DIR() {
@@ -230,11 +233,36 @@ public class CommonFileOp {
 
     /**
      * 获取blobs里面的某一个文件
+     *
      * @param hashName
      */
-    public static File getBlob(String hashName){
-        return join(getBLOBS(),hashName);
+    public static File getBlob(String hashName) {
+        return join(getBLOBS(), hashName);
     }
 
+    /**
+     * 计算项目根目录和传入文件的相对路径
+     *
+     * @param base
+     * @param file
+     * @return
+     */
+    public static String getRelativePath(File base, File file) {
+        try {
+            // 1️⃣ 转为标准化的绝对路径（去掉 ..、.、符号链接等）
+            Path basePath = base.getCanonicalFile().toPath();
+            Path filePath = file.getCanonicalFile().toPath();
 
+            // 2️⃣ 计算相对路径
+            Path relativePath = basePath.relativize(filePath);
+
+            // 3️⃣ 转为字符串（Path 会自动用系统文件分隔符）
+            return relativePath.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get relative path from "
+                    + base + " to " + file, e);
+        }
+
+
+    }
 }

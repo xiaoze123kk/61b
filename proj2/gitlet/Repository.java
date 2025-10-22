@@ -1,9 +1,9 @@
 package gitlet;
 
 import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static gitlet.CommonFileOp.*;
 import static gitlet.Utils.*;
@@ -118,17 +118,44 @@ public class Repository {
         //staging area中，将其移除
         String targetHash = sha1(readContents(target));
         Commit curCommit = getCurCommit();
-        String oldHash = curCommit.getBlobHash(filename);
-        //判断版本一致
-        if (oldHash != null && oldHash.equals(targetHash)) {
-            removeFrom(join(getSTAGING(), "add", target.getName()));
-            System.exit(0);
-        }
-        //如果该文件在待删除状态，将该文件从rm中移除
-        removeFrom(join(getSTAGING(), "remove", target.getName()));
 
-        File dir = join(getSTAGING(), "add");
-        copyTo(target, dir);
+        String relative = getRelativePath(gitletDirOrDie().getParentFile(),target);
+        String oldHash = curCommit.getBlobHash(relative);
+
+        //取出暂存区的map
+        MapFile mapAdd;
+        MapFile mapRemove;
+        File forAdd = join(getSTAGINGADD(),"forAdd");
+        File forRemove = join(getSTAGINGREMOVE(),"forRemove");
+        if (forAdd.exists()){
+            mapAdd = readObject(forAdd, MapFile.class);
+        }
+        else {
+            mapAdd = new MapFile();
+        }
+
+        //如果处于待删除状态
+        if (forRemove.exists()){
+            mapRemove = readObject(forRemove, MapFile.class);
+            mapRemove.getMapRandH().remove(relative);
+            removeFrom(getSTAGINGREMOVE());
+            return;
+        }
+
+        //版本一致就将该文件从暂存区删除
+        if (oldHash.equals(targetHash)){
+            mapAdd.getMapRandH().remove(relative);
+            removeFrom(getSTAGINGADD());
+            return;
+        }
+
+        //将更新后的mapAdd重新写入
+        mapAdd.getMapRandH().put(relative,targetHash);
+        forAdd.delete();
+        writeObject(forAdd,mapAdd);
+
+        copyTo(target,getSTAGINGADD());
+
     }
 
     /**
@@ -153,9 +180,9 @@ public class Repository {
         }
         Commit newCommit =  Commit.fromParent(getCurCommit(), msg);
         //找add文件夹里的内容并加入
-        newCommit.addFile(getSTAGINGADD());
+       // newCommit.addFile(getSTAGINGADD());
         //找remove文件夹里的内容并删除
-        newCommit.removeFile(getSTAGINGREMOVE());
+       // newCommit.removeFile(getSTAGINGREMOVE());
         //将commit写进commits
         newCommit.computeMyHash();
         writeObject(join(getCOMMITS(), newCommit.getCommitId()),newCommit);
