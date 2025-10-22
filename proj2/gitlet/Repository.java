@@ -143,7 +143,7 @@ public class Repository {
         }
 
         //版本一致就将该文件从暂存区删除
-        if (oldHash.equals(targetHash)){
+        if (targetHash.equals(oldHash)){
             mapAdd.getMapRandH().remove(relative);
             removeFrom(getSTAGINGADD());
             return;
