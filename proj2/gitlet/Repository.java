@@ -15,15 +15,25 @@ import static gitlet.Utils.*;
  */
 public class Repository {
 
-    /** 当前工作目录。 */
+    /**
+     * 当前工作目录。
+     */
     public static final File CWD = new File(System.getProperty("user.dir"));
-    /** .gitlet 目录。 */
+    /**
+     * .gitlet 目录。
+     */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    /** 当前分支 */
+    /**
+     * 当前分支
+     */
     private Branch curBranch;
-    /** 分支map表 */
+    /**
+     * 分支map表
+     */
     private java.util.Map<String, Branch> BranchMap;
-    /** 当前头指针 */
+    /**
+     * 当前头指针
+     */
     private Commit HEAD;
 
 
@@ -118,112 +128,120 @@ public class Repository {
         //staging area中，将其移除
         String targetHash = sha1(readContents(target));
         Commit curCommit = getCurCommit();
-
-        String relative = getRelativePath(gitletDirOrDie().getParentFile(),target);
+        String relative = getRelativePathWithRoot(target);
         String oldHash = curCommit.getBlobHash(relative);
-
         //取出暂存区的map
         MapFile mapAdd;
         MapFile mapRemove;
-        File forAdd = join(getSTAGINGADD(),"forAdd");
-        File forRemove = join(getSTAGINGREMOVE(),"forRemove");
-        if (forAdd.exists()){
-            mapAdd = readObject(forAdd, MapFile.class);
-        }
-        else {
-            mapAdd = new MapFile();
-        }
-
+        File forAdd = join(getSTAGINGADD(), "forAdd");
+        File forRemove = join(getSTAGINGREMOVE(), "forRemove");
+        mapAdd = getMapAdd();
         //如果处于待删除状态
-        if (forRemove.exists()){
+        if (forRemove.exists()) {
             mapRemove = readObject(forRemove, MapFile.class);
-            mapRemove.getMapRandH().remove(relative);
-            removeFrom(getSTAGINGREMOVE());
+            mapRemove.delFile(filename);
+            removeFrom(join(getSTAGINGREMOVE(), filename));
+            writeObject(forRemove, mapRemove);
             return;
         }
-
         //版本一致就将该文件从暂存区删除
-        if (targetHash.equals(oldHash)){
-            mapAdd.getMapRandH().remove(relative);
-            removeFrom(getSTAGINGADD());
+        if (targetHash.equals(oldHash)) {
+            mapAdd.map().remove(filename);
+            removeFrom(join(getSTAGINGADD(), filename));
+            // 持久化更新后的 forAdd
+            writeObject(forAdd, mapAdd);
             return;
         }
-
         //将更新后的mapAdd重新写入
-        mapAdd.getMapRandH().put(relative,targetHash);
-        forAdd.delete();
-        writeObject(forAdd,mapAdd);
-
-        copyTo(target,getSTAGINGADD());
-
+        mapAdd.putFile(filename,relative,targetHash);
+        writeObject(forAdd, mapAdd);
+        //目标文件拷贝到暂存区
+        copyTo(target, getSTAGINGADD());
     }
 
     /**
      * commit命令
+     *
      * @param msg
      */
-    public void commit(String msg){
+    public void commit(String msg) {
         File start = new File(System.getProperty("user.dir"));
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
-        // 暂存区均为空时，不允许提交
-        File[] addFiles = getSTAGINGADD().listFiles();
-        File[] rmFiles = getSTAGINGREMOVE().listFiles();
-        boolean addEmpty = (addFiles == null || addFiles.length == 0);
-        boolean rmEmpty = (rmFiles == null || rmFiles.length == 0);
-        if (addEmpty && rmEmpty){
+        // 读取暂存区元数据（forAdd/forRemove），不存在则视为为空
+        MapFile addMeta = getMapAdd();
+        MapFile rmMeta = getMapRemove();
+        boolean addEmpty = addMeta.map().isEmpty();
+        boolean rmEmpty = rmMeta.map().isEmpty();
+        if (addEmpty && rmEmpty) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
-        Commit newCommit =  Commit.fromParent(getCurCommit(), msg);
-        //找add文件夹里的内容并加入
-       // newCommit.addFile(getSTAGINGADD());
-        //找remove文件夹里的内容并删除
-       // newCommit.removeFile(getSTAGINGREMOVE());
-        //将commit写进commits
+        Commit base = getCurCommit();
+        Commit newCommit = Commit.fromParent(base, msg);
+        // 应用 add 暂存：按路径与 blobHash 写入，避免依赖工作区
+        for (String k : addMeta.map().keySet()) {
+            MapFile.Pair p = addMeta.map().get(k);
+            newCommit.addFileWithHash(p.relativePath, p.fileHash);
+        }
+        // 应用 remove 暂存：按路径从树中移除
+        for (String k : rmMeta.map().keySet()) {
+            MapFile.Pair p = rmMeta.map().get(k);
+            newCommit.removeFile(p.relativePath);
+        }
+        // 正确设置父提交为当前 HEAD
+        newCommit.setParentCommit(base.getCommitId());
         newCommit.computeMyHash();
-        writeObject(join(getCOMMITS(), newCommit.getCommitId()),newCommit);
+        writeObject(join(getCOMMITS(), newCommit.getCommitId()), newCommit);
         //更改头指针朝向
         HeadChange(newCommit);
-        //删除暂存区里的文件
+        // 清空暂存区内容并保留目录结构
         removeFrom(getSTAGINGADD());
         removeFrom(getSTAGINGREMOVE());
+        // 重新创建 staging/add 与 staging/remove 目录
+        getSTAGINGADD().mkdirs();
+        getSTAGINGREMOVE().mkdirs();
     }
 
     /**
      * remove命令
      */
-    public void remove(String filename){
+    public void remove(String filename) {
         File start = new File(System.getProperty("user.dir"));
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
-        //判断是否在add暂存区
-        {
-            File target = join(getSTAGINGADD(), filename);
-            if (target.exists()) {
-                removeFrom(target);
-                return;
-            }
+        //判断是否在add暂存区,在的话解除跟踪
+        File targetInAdd = join(getSTAGINGADD(), filename);
+
+        if (targetInAdd.exists()) {
+            removeFrom(targetInAdd);
+            MapFile mAdd = getMapAdd();
+            mAdd.delFile(filename);
+            // 持久化更新后的 forAdd
+            writeObject(getFORADD(), mAdd);
+            return;
         }
-        //判断是否被当前的commit跟踪
+        File target = join(start, filename);
+        String relative = getRelativePathWithRoot(target);
         Commit curCommit = getCurCommit();
-        if (curCommit.getBlobHash(filename) != null){
-            // 在 staging/remove 放入以文件名命名的删除标记，提交时按名称移除跟踪
-            File rmMarker = join(getSTAGINGREMOVE(), filename);
-            File parentDir = rmMarker.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-            }
-            writeContents(rmMarker, "");
+        //如果该文件被当前的commit跟踪，则将其暂存以待删除
+        String blobHash = curCommit.getBlobHash(relative);
+        if (blobHash != null) {
+            File wait4rm = join(getBLOBS(), blobHash);
+            copyTo(wait4rm, getSTAGINGREMOVE());
+            File forRemoveMeta = join(getSTAGINGREMOVE(), "forRemove");
+            MapFile rmMeta = getMapRemove();
+            rmMeta.putFile(filename,relative,blobHash);
+            writeObject(forRemoveMeta, rmMeta);
             // 工作区存在该文件则删除
-            File target = findTargetFile(filename, start);
-            if (target != null){
+            target = findTargetFile(filename, start);
+            if (target != null) {
                 removeFrom(target);
             }
             return;
@@ -235,7 +253,7 @@ public class Repository {
     /**
      * log命令
      */
-    public void log(){
+    public void log() {
         File start = new File(System.getProperty("user.dir"));
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
@@ -245,12 +263,12 @@ public class Repository {
 
         Commit cur = getCurCommit();
         //循环打印信息
-        while (true){
+        while (true) {
             System.out.println("===");
             System.out.println("commit" + " " + cur.getCommitId());
             //如果存在合并的父提交,加一行
-            if (cur.getMparentCommit()!=null){
-                System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
+            if (cur.getMparentCommit() != null) {
+                System.out.println("Merge: " + cur.getParentCommit().substring(0, 7) + " " + cur.getMparentCommit().substring(0, 7));
             }
             Date date = new Date(cur.getTimestamp());
             String formatted = String.format(Locale.US, "Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
@@ -258,10 +276,10 @@ public class Repository {
             System.out.println(cur.getMessage());
             System.out.println();
             //打印完后向前遍历
-            if (cur.getParentCommit() == null){
+            if (cur.getParentCommit() == null) {
                 break;
             }
-            cur = readObject(join(getCOMMITS(),cur.getParentCommit()),Commit.class);
+            cur = readObject(join(getCOMMITS(), cur.getParentCommit()), Commit.class);
         }
 
     }
@@ -269,7 +287,7 @@ public class Repository {
     /**
      * global-log命令
      */
-    public void global_log(){
+    public void global_log() {
         File start = new File(System.getProperty("user.dir"));
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
@@ -284,8 +302,8 @@ public class Repository {
             System.out.println("===");
             System.out.println("commit" + " " + cur.getCommitId());
             //如果存在合并的父提交,加一行
-            if (cur.getMparentCommit()!=null){
-                System.out.println("Merge: " + cur.getParentCommit().substring(0,7) + " " + cur.getMparentCommit().substring(0,7));
+            if (cur.getMparentCommit() != null) {
+                System.out.println("Merge: " + cur.getParentCommit().substring(0, 7) + " " + cur.getMparentCommit().substring(0, 7));
             }
             Date date = new Date(cur.getTimestamp());
             String formatted = String.format(Locale.US, "Date: %ta %tb %td %tT %tY %tz", date, date, date, date, date, date);
@@ -298,9 +316,10 @@ public class Repository {
 
     /**
      * find命令
+     *
      * @param msg
      */
-    public void find(String msg){
+    public void find(String msg) {
         File start = new File(System.getProperty("user.dir"));
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
@@ -311,13 +330,13 @@ public class Repository {
         List<String> filenames = plainFilenamesIn(getCOMMITS());
         for (int i = 0; i < filenames.size(); i++) {
             Commit cur = readObject(join(getCOMMITS(), filenames.get(i)), Commit.class);
-            if (cur.getMessage().equals(msg)){
+            if (cur.getMessage().equals(msg)) {
                 System.out.println(cur.getCommitId());
                 hasId = true;
             }
         }
         //如果没有这样的提交信息，输出错误信息
-        if (!hasId){
+        if (!hasId) {
             System.out.println("Found no commit with that message.");
             System.exit(0);
         }

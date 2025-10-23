@@ -55,6 +55,7 @@ public class Commit implements Serializable {
 
     /** 返回根目录树哈希 */
     public String getTreeHash() { return treeHash; }
+    public void setTreeHash(String treeHash){this.treeHash = treeHash;}
 
     /** 获取路径对应的 blob 哈希，不存在返回 null */
     public String getBlobHash(String path) {
@@ -74,7 +75,9 @@ public class Commit implements Serializable {
 
     /**
      * 将工作区中的某个“文件路径”加入到当前提交的 Tree 中。
-     * 路径使用系统分隔符传入，内部会规范为 '/'。
+     * 路径使用系统分隔符传入，内部会规范为 '/'
+     * 注意：该方法会直接读取工作区文件并写入 blob；若文件不存在则忽略。
+     * 更推荐在“提交构建”阶段调用 addFileWithHash，由上层（暂存区）提供 blobHash，避免直接访问文件系统。
      */
     public void addFile(String path){
         if (path == null || path.isEmpty()) return;
@@ -88,8 +91,18 @@ public class Commit implements Serializable {
     }
 
     /**
+     * 在不访问文件系统的前提下，把给定路径绑定到已存在的 blob 哈希。
+     * 典型用法：由 add 命令计算并写入 blob 后，在构建提交时把暂存区中的 (path, blobHash) 合并进树。
+     */
+    public void addFileWithHash(String path, String blobHash) {
+        if (path == null || path.isEmpty() || blobHash == null || blobHash.isEmpty()) return;
+        String norm = normalizePath(path);
+        treeHash = Tree.putFile(treeHash, norm, blobHash);
+    }
+
+    /**
      * 从当前提交的 Tree 中删除对应的“路径”（文件或整个目录）。
-     * 路径使用系统分隔符传入，内部会规范为 '/'。
+     * 路径使用系统分隔符传入，内部会规范为 '/'
      */
     public void removeFile(String path){
         if (path == null || path.isEmpty()) return;

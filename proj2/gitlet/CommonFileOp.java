@@ -112,6 +112,16 @@ public class CommonFileOp {
         return join(gitletDirOrDie(), "trees");
     }
 
+    /** 获取 staging/add 的元数据文件 forAdd */
+    public static File getFORADD() {
+        return join(getSTAGINGADD(), "forAdd");
+    }
+
+    /** 获取 staging/remove 的元数据文件 forRemove */
+    public static File getFORREMOVE() {
+        return join(getSTAGINGREMOVE(), "forRemove");
+    }
+
 
     /**
      * 找到当前目录下的目标文件，找不到就返回null
@@ -265,4 +275,57 @@ public class CommonFileOp {
 
 
     }
+
+    /**
+     * 计算.gitlet的父目录和传入文件的相对路径
+     * @param file
+     * @return
+     */
+    public static String getRelativePathWithRoot(File file){
+        try {
+            // 1️⃣ 转为标准化的绝对路径（去掉 ..、.、符号链接等）
+            Path basePath = gitletDirOrDie().getCanonicalFile().toPath();
+            Path filePath = file.getCanonicalFile().toPath();
+
+            // 2️⃣ 计算相对路径
+            Path relativePath = basePath.relativize(filePath);
+
+            // 3️⃣ 转为字符串（Path 会自动用系统文件分隔符）
+            return relativePath.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get relative path from "
+                    + ".gitlet's parent" + " to " + file, e);
+        }
+    }
+
+    /**
+     * 获取add暂存区的mapAdd（MapFile对象）
+     * @return
+     */
+    public static MapFile getMapAdd(){
+        File forAdd = join(getSTAGINGADD(), "forAdd");
+        MapFile mapAdd;
+        if (forAdd.exists()) {
+            mapAdd = readObject(forAdd, MapFile.class);
+        } else {
+            mapAdd = new MapFile();
+        }
+        return mapAdd;
+    }
+
+    /**
+     * 获取remove暂存区的mapRemove(MapFile对象)
+     * @return
+     */
+    public static MapFile getMapRemove(){
+        File forRemove = join(getSTAGINGREMOVE(),"forRemove");
+        MapFile mapRemove;
+        if (forRemove.exists()){
+            mapRemove = readObject(forRemove, MapFile.class);
+        }else {
+            mapRemove = new MapFile();
+        }
+        return mapRemove;
+    }
+
 }
