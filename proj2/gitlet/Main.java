@@ -6,6 +6,7 @@ import java.util.Objects;
  * Gitlet 的驱动类，Git 版本控制系统的一个子集。
  * 这个gitlet项目只考虑的是一个扁平的文件夹，不考虑子目录，现在我是多实现了一些，写测试只考虑.gitlet仓库
  * 同级层次的目录下只存在文件即可
+ *
  * @author
  */
 public class Main {
@@ -81,7 +82,7 @@ public class Main {
                 repo.status();
                 break;
             case "checkout":
-                if (Objects.equals(args[1], "--") && args.length == 3){
+                if (Objects.equals(args[1], "--") && args.length == 3) {
                     repo.checkout1(args[2]);
                 } else if (args.length == 4 && Objects.equals(args[2], "--")) {
                     repo.checkout2(args[1], args[3]);
@@ -98,6 +99,13 @@ public class Main {
                     System.exit(0);
                 }
                 repo.branch(args[1]);
+                break;
+            case "rm-branch":
+                if (args.length != 2) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.rmbranch(args[1]);
                 break;
             default:
                 System.out.println("No command with that name exists.");

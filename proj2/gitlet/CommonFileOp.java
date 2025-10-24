@@ -112,12 +112,16 @@ public class CommonFileOp {
         return join(gitletDirOrDie(), "trees");
     }
 
-    /** 获取 staging/add 的元数据文件 forAdd */
+    /**
+     * 获取 staging/add 的元数据文件 forAdd
+     */
     public static File getFORADD() {
         return join(getSTAGINGADD(), "forAdd");
     }
 
-    /** 获取 staging/remove 的元数据文件 forRemove */
+    /**
+     * 获取 staging/remove 的元数据文件 forRemove
+     */
     public static File getFORREMOVE() {
         return join(getSTAGINGREMOVE(), "forRemove");
     }
@@ -278,10 +282,11 @@ public class CommonFileOp {
 
     /**
      * 计算.gitlet的父目录和传入文件的相对路径
+     *
      * @param file
      * @return
      */
-    public static String getRelativePathWithRoot(File file){
+    public static String getRelativePathWithRoot(File file) {
         try {
             // 以 .gitlet 的父目录为基准（工作区根）
             File repoRoot = gitletDirOrDie().getParentFile().getCanonicalFile();
@@ -297,9 +302,10 @@ public class CommonFileOp {
 
     /**
      * 获取add暂存区的mapAdd（MapFile对象）
+     *
      * @return
      */
-    public static MapFile getMapAdd(){
+    public static MapFile getMapAdd() {
         File forAdd = join(getSTAGINGADD(), "forAdd");
         MapFile mapAdd;
         if (forAdd.exists()) {
@@ -312,14 +318,15 @@ public class CommonFileOp {
 
     /**
      * 获取remove暂存区的mapRemove(MapFile对象)
+     *
      * @return
      */
-    public static MapFile getMapRemove(){
-        File forRemove = join(getSTAGINGREMOVE(),"forRemove");
+    public static MapFile getMapRemove() {
+        File forRemove = join(getSTAGINGREMOVE(), "forRemove");
         MapFile mapRemove;
-        if (forRemove.exists()){
+        if (forRemove.exists()) {
             mapRemove = readObject(forRemove, MapFile.class);
-        }else {
+        } else {
             mapRemove = new MapFile();
         }
         return mapRemove;
@@ -328,16 +335,13 @@ public class CommonFileOp {
     /**
      * 判断当前目录下是否有.gitlet仓库
      */
-    public static void repoExist(File start){
+    public static void repoExist(File start) {
         //看当前的目录或父目录是否存在.gitlet仓库
         if (findGitlet(start) == null) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
     }
-
-
-
 
 
 }

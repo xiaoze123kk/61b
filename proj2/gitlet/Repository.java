@@ -516,5 +516,28 @@ public class Repository {
         writeContents(refFile, cur.getCommitId());
     }
 
+    /**
+     *rm-branch命令
+     * @param branchname
+     */
+    public void rmbranch(String branchname){
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        File targetBranch = join(getREFS(),branchname);
+        if (!targetBranch.exists()){
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String curBranch = readContentsAsString(getHEAD());
+        if (curBranch.equals(branchname)){
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        //要是分支存在
+        targetBranch.delete();
+
+    }
+
+
 
 }
