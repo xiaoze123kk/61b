@@ -328,4 +328,19 @@ public class CommonFileOp {
         return mapRemove;
     }
 
+    /**
+     * 判断当前目录下是否有.gitlet仓库
+     */
+    public static void repoExist(File start){
+        //看当前的目录或父目录是否存在.gitlet仓库
+        if (findGitlet(start) == null) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+    }
+
+
+
+
+
 }

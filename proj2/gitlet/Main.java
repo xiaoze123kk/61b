@@ -79,6 +79,13 @@ public class Main {
                 repo.find(args[1]);
                 break;
             // 该名称的命令不存在
+            case "status":
+                if (args.length!=1){
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.status();
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
