@@ -344,22 +344,24 @@ public class Repository {
         }
         System.out.println();
         System.out.println("=== Staged Files ===");
-        List<String> stagedNames = plainFilenamesIn(getSTAGINGADD());
-        if (stagedNames != null) {
-            for (String stagedName : stagedNames){
-                if (!"forAdd".equals(stagedName)) {
-                    System.out.println(stagedName);
-                }
+        // 从元数据 forAdd 读取已暂存的文件名并排序输出
+        MapFile addMetaForStatus = getMapAdd();
+        if (addMetaForStatus != null && !addMetaForStatus.map().isEmpty()) {
+            List<String> addNames = new ArrayList<>(addMetaForStatus.map().keySet());
+            Collections.sort(addNames);
+            for (String name : addNames) {
+                System.out.println(name);
             }
         }
         System.out.println();
         System.out.println("=== Removed Files ===");
-        List<String> removeNames = plainFilenamesIn(getSTAGINGREMOVE());
-        if (removeNames != null) {
-            for (String removeName : removeNames){
-                if (!"forRemove".equals(removeName)) {
-                    System.out.println(removeName);
-                }
+        // 从元数据 forRemove 读取待删除文件名并排序输出
+        MapFile rmMetaForStatus = getMapRemove();
+        if (rmMetaForStatus != null && !rmMetaForStatus.map().isEmpty()) {
+            List<String> rmNames = new ArrayList<>(rmMetaForStatus.map().keySet());
+            Collections.sort(rmNames);
+            for (String name : rmNames) {
+                System.out.println(name);
             }
         }
         System.out.println();
