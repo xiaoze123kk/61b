@@ -127,6 +127,21 @@ public class Commit implements Serializable {
         return c;
     }
 
+    /**
+     * 假设整棵目录树中没有重名文件：
+     * 传入仅“文件名”（不含路径），返回该文件在本提交中的相对路径与 blob 哈希。
+     * 若未找到则返回 null。
+     * 返回数组格式：[0] = relativePath, [1] = blobHash
+     */
+    public String[] findPathAndHashByFilename(String filename) {
+        if (filename == null || filename.isEmpty()) return null;
+        String blobHash = Tree.findBlobHashByName(treeHash, filename);
+        if (blobHash == null) return null;
+        String relPath = Tree.findPathByName(treeHash, filename);
+        if (relPath == null || relPath.isEmpty()) return null;
+        return new String[]{relPath, blobHash};
+    }
+
     /** 将任意平台的路径规范为以 '/' 分隔的相对路径，去除开头的 './' 或前导分隔符。 */
     private static String normalizePath(String path) {
         String p = path.replace("\\", "/");

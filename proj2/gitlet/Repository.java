@@ -1,8 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static gitlet.CommonFileOp.*;
@@ -30,7 +28,7 @@ public class Repository {
     /**
      * 分支map表
      */
-    private java.util.Map<String, Branch> BranchMap;
+    private Map<String, Branch> BranchMap;
     /**
      * 当前头指针
      */
@@ -124,6 +122,8 @@ public class Repository {
         //文件的当前版本跟当前commit的版本一致，则不添加，并且如果此文件若是在
         //staging area中，将其移除
         String targetHash = sha1(readContents(target));
+        // 确保 blob 已写入 .gitlet/blobs
+        writeToBlobs(target);
         Commit curCommit = getCurCommit();
         String relative = getRelativePathWithRoot(target);
         String oldHash = curCommit.getBlobHash(relative);
@@ -179,6 +179,15 @@ public class Repository {
         // 应用 add 暂存：按路径与 blobHash 写入，避免依赖工作区
         for (String k : addMeta.map().keySet()) {
             MapFile.Pair p = addMeta.map().get(k);
+            // 确保 blobs 中存在该内容
+            File blobFile = join(getBLOBS(), p.fileHash);
+            if (!blobFile.exists()) {
+                File stagedFile = join(getSTAGINGADD(), k);
+                if (stagedFile.exists() && stagedFile.isFile()) {
+                    byte[] content = readContents(stagedFile);
+                    writeContents(blobFile, content);
+                }
+            }
             newCommit.addFileWithHash(p.relativePath, p.fileHash);
         }
         // 应用 remove 暂存：按路径从树中移除
@@ -369,6 +378,142 @@ public class Repository {
         System.out.println();
         System.out.println("=== Untracked Files ===");//这个部分也鸽一下
         System.out.println();
+    }
+
+    /**
+     * 将文件在头提交中存在的版本放入工作目录中
+     *
+     * @param filename
+     */
+    public void checkout1(String filename) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        Commit cur = getCurCommit();
+        String[] s = cur.findPathAndHashByFilename(filename);
+        if (s == null) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        // 将 blob 内容写回工作区同名文件（扁平结构）
+        byte[] data = readContents(join(getBLOBS(), s[1]));
+        writeContents(join(CWD, filename), data);
+    }
+
+    /**
+     * 获取指定 ID 提交的文件版本，并将其放入工作目录
+     *
+     * @param commitId
+     * @param filename
+     */
+    public void checkout2(String commitId, String filename) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        File[] commits = getCOMMITS().listFiles();
+        Commit targetCommit = null;
+        if (commits != null) {
+            int matches = 0;
+            for (File f : commits) {
+                String commitName = f.getName();
+                if (commitName.startsWith(commitId)) {
+                    matches++;
+                    targetCommit = readObject(f, Commit.class);
+                }
+            }
+            if (matches != 1) { // 0 或 >1 都视为不存在
+                System.out.println("No commit with that id exists.");
+                System.exit(0);
+            }
+        } else {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        String[] s = targetCommit.findPathAndHashByFilename(filename);
+        if (s == null) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        // 写回指定提交的该文件内容
+        byte[] data = readContents(join(getBLOBS(), s[1]));
+        writeContents(join(CWD, filename), data);
+    }
+
+    /**
+     * 迁出当前目标分支的文件到工作目录
+     *
+     * @param branchName
+     */
+    public void checkout3(String branchName) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        File targetBranchRef = join(getREFS(), branchName);
+        if (!targetBranchRef.exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        String curBranchName = readContentsAsString(getHEAD());
+        if (curBranchName.equals(branchName)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        // 当前与目标提交
+        Commit curCommit = getCurCommit();
+        String targetCommitId = readContentsAsString(targetBranchRef);
+        Commit targetCommit = readObject(join(getCOMMITS(), targetCommitId), Commit.class);
+        Tree curTree = readObject(join(getTREES_DIR(), curCommit.getTreeHash()), Tree.class);
+        Tree targetTree = readObject(join(getTREES_DIR(), targetCommit.getTreeHash()), Tree.class);
+        // 未跟踪文件冲突：CWD 中存在文件 X，且 X 不被当前提交跟踪，但在目标提交中存在，将被覆盖
+        File[] files = CWD.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                String name = f.getName();
+                boolean trackedInCur = curTree.getFiles().containsKey(name);
+                boolean existsInTarget = targetTree.getFiles().containsKey(name);
+                if (!trackedInCur && existsInTarget) {
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        // 删除当前分支跟踪但目标分支不包含的文件
+        for (String f : curTree.getFiles().keySet()) {
+            if (!targetTree.getFiles().containsKey(f)) {
+                File wf = join(CWD, f);
+                if (wf.exists()) wf.delete();
+            }
+        }
+        // 写入目标分支的文件内容（覆盖）
+        for (Map.Entry<String, String> e : targetTree.getFiles().entrySet()) {
+            String name = e.getKey();
+            String blob = e.getValue();
+            byte[] data = readContents(join(getBLOBS(), blob));
+            writeContents(join(CWD, name), data);
+        }
+        // 更新 HEAD 指向目标分支名
+        writeContents(getHEAD(), branchName);
+        // 清空暂存区
+        removeFrom(getSTAGINGADD());
+        removeFrom(getSTAGINGREMOVE());
+        getSTAGINGREMOVE().mkdirs();
+        getSTAGINGADD().mkdirs();
+    }
+
+    /**
+     * 创建新分支：refs/<name> 指向当前提交。
+     */
+    public void branch(String name) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        if (name == null || name.isEmpty()) {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+        File refFile = join(getREFS(), name);
+        if (refFile.exists()) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Commit cur = getCurCommit();
+        writeContents(refFile, cur.getCommitId());
     }
 
 

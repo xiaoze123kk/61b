@@ -283,15 +283,12 @@ public class CommonFileOp {
      */
     public static String getRelativePathWithRoot(File file){
         try {
-            // 1️⃣ 转为标准化的绝对路径（去掉 ..、.、符号链接等）
-            Path basePath = gitletDirOrDie().getCanonicalFile().toPath();
+            // 以 .gitlet 的父目录为基准（工作区根）
+            File repoRoot = gitletDirOrDie().getParentFile().getCanonicalFile();
+            Path basePath = repoRoot.toPath();
             Path filePath = file.getCanonicalFile().toPath();
-
-            // 2️⃣ 计算相对路径
             Path relativePath = basePath.relativize(filePath);
-
-            // 3️⃣ 转为字符串（Path 会自动用系统文件分隔符）
-            return relativePath.toString();
+            return relativePath.toString().replace('\\', '/');
         } catch (IOException e) {
             throw new RuntimeException("Failed to get relative path from "
                     + ".gitlet's parent" + " to " + file, e);

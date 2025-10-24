@@ -205,5 +205,58 @@ public class Tree implements Serializable {
         return writeTree(nt);
     }
 
+    /**
+     * 在整棵树中按文件名查找对应的 blob 哈希（假设全树内无同名文件）。
+     * @param filename 仅文件名（不含路径）
+     * @return 命中的 blob 哈希；未找到返回 null
+     */
+    public String findBlobHashByName(String filename) {
+        if (filename == null || filename.isEmpty()) return null;
+        // 当前层匹配
+        String hit = files.get(filename);
+        if (hit != null) return hit;
+        // 递归到子目录
+        for (String childHash : dirs.values()) {
+            Tree child = readTree(childHash);
+            String res = child.findBlobHashByName(filename);
+            if (res != null) return res;
+        }
+        return null;
+    }
+
+    /**
+     * 依据根哈希按文件名查找 blob 哈希（假设全树内无同名文件）。
+     * @param rootHash 根 Tree 哈希
+     * @param filename 仅文件名
+     * @return 命中的 blob 哈希或 null
+     */
+    public static String findBlobHashByName(String rootHash, String filename) {
+        if (rootHash == null || rootHash.isEmpty()) return null;
+        Tree t = readTree(rootHash);
+        return t.findBlobHashByName(filename);
+    }
+
+    /**
+     * 依据根哈希按文件名查找其相对路径（假设全树内无同名文件）。
+     * @param rootHash 根 Tree 哈希
+     * @param filename 仅文件名
+     * @return 形如 "a/b/filename" 或 "filename" 的相对路径；未找到返回 null
+     */
+    public static String findPathByName(String rootHash, String filename) {
+        if (rootHash == null || rootHash.isEmpty() || filename == null || filename.isEmpty()) return null;
+        return findPathRec(rootHash, filename);
+    }
+
+    /** 递归辅助：返回从当前 hash 开始的相对路径 */
+    private static String findPathRec(String hash, String filename) {
+        if (hash == null) return null;
+        Tree t = readTree(hash);
+        if (t.files.containsKey(filename)) return filename;
+        for (Map.Entry<String, String> e : t.dirs.entrySet()) {
+            String sub = findPathRec(e.getValue(), filename);
+            if (sub != null) return e.getKey() + "/" + sub;
+        }
+        return null;
+    }
 
 }
