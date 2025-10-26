@@ -449,24 +449,13 @@ public class Repository {
     }
 
     /**
-     * 迁出当前目标分支的文件到工作目录
-     *
+     * 覆写
      * @param branchName
      */
-    public boolean checkout3(String branchName) {
-        File start = new File(System.getProperty("user.dir"));
-        repoExist(start);
-        File targetBranchRef = join(getREFS(), branchName);
-        if (!targetBranchRef.exists()) {
-            System.out.println("No such branch exists.");
-            return false;
-        }
-        String curBranchName = readContentsAsString(getHEAD());
-        if (curBranchName.equals(branchName)) {
-            System.out.println("No need to checkout the current branch.");
-            return false;
-        }
+    public boolean overWrite (String branchName){
         // 当前与目标提交
+        File targetBranchRef = join(getREFS(), branchName);
+
         Commit curCommit = getCurCommit();
         String targetCommitId = readContentsAsString(targetBranchRef);
         Commit targetCommit = readObject(join(getCOMMITS(), targetCommitId), Commit.class);
@@ -499,6 +488,29 @@ public class Repository {
             byte[] data = readContents(join(getBLOBS(), blob));
             writeContents(join(CWD, name), data);
         }
+        return true;
+    }
+
+
+    /**
+     * 迁出当前目标分支的文件到工作目录
+     *
+     * @param branchName
+     */
+    public boolean checkout3(String branchName) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        File targetBranchRef = join(getREFS(), branchName);
+        if (!targetBranchRef.exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        String curBranchName = readContentsAsString(getHEAD());
+        if (curBranchName.equals(branchName)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        overWrite(branchName);
         // 更新 HEAD 指向目标分支名
         writeContents(getHEAD(), branchName);
         // 清空暂存区
@@ -560,7 +572,7 @@ public class Repository {
         String curCommitId = readContentsAsString(curBranch);
         Commit backUp = readObject(join(getCOMMITS(),curCommitId), Commit.class);
         writeObject(curBranch,c);
-        if (!checkout3(curBranch.getName())){
+        if (!overWrite(curBranch.getName())){
             writeObject(curBranch,backUp);
         }
     }
