@@ -557,7 +557,8 @@ public class Repository {
         //已知存在这个commitId,把当前分支的头节点先保存（便于失败后重新写入）
         //然后指向当前commit
         File curBranch = join(getREFS(),readContentsAsString(getHEAD()));
-        Commit backUp = readObject(curBranch, Commit.class);
+        String curCommitId = readContentsAsString(curBranch);
+        Commit backUp = readObject(join(getCOMMITS(),curCommitId), Commit.class);
         writeObject(curBranch,c);
         if (!checkout3(curBranch.getName())){
             writeObject(curBranch,backUp);
