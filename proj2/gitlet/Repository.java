@@ -571,9 +571,9 @@ public class Repository {
         File curBranch = join(getREFS(),readContentsAsString(getHEAD()));
         String curCommitId = readContentsAsString(curBranch);
         Commit backUp = readObject(join(getCOMMITS(),curCommitId), Commit.class);
-        writeObject(curBranch,c);
+        writeContents(curBranch, c.getCommitId());
         if (!overWrite(curBranch.getName())){
-            writeObject(curBranch,backUp);
+            writeContents(curBranch, backUp.getCommitId());
         }
     }
 
