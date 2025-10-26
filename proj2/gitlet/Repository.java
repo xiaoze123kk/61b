@@ -575,6 +575,7 @@ public class Repository {
         if (!overWrite(curBranch.getName())){
             writeContents(curBranch, backUp.getCommitId());
         }
+        clearStagingArea();
     }
 
 
