@@ -107,6 +107,13 @@ public class Main {
                 }
                 repo.rmbranch(args[1]);
                 break;
+            case "reset":
+                if (args.length != 2) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                repo.reset(args[1]);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);

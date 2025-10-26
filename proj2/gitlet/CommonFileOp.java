@@ -343,5 +343,14 @@ public class CommonFileOp {
         }
     }
 
+    /**
+     * 清除暂存区
+     */
+    public static void clearStagingArea(){
+        removeFrom(getSTAGINGADD());
+        removeFrom(getSTAGINGREMOVE());
+        getSTAGINGREMOVE().mkdirs();
+        getSTAGINGADD().mkdirs();
+    }
 
 }

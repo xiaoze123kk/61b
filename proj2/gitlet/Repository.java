@@ -400,14 +400,9 @@ public class Repository {
     }
 
     /**
-     * 获取指定 ID 提交的文件版本，并将其放入工作目录
-     *
-     * @param commitId
-     * @param filename
+     * 判断指定的提交id是否存在
      */
-    public void checkout2(String commitId, String filename) {
-        File start = new File(System.getProperty("user.dir"));
-        repoExist(start);
+    public Commit isCommitExist(String commitId){
         File[] commits = getCOMMITS().listFiles();
         Commit targetCommit = null;
         if (commits != null) {
@@ -427,6 +422,22 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
+        return targetCommit;
+    }
+
+
+
+
+    /**
+     * 获取指定 ID 提交的文件版本，并将其放入工作目录
+     *
+     * @param commitId
+     * @param filename
+     */
+    public void checkout2(String commitId, String filename) {
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        Commit targetCommit = isCommitExist(commitId);
         String[] s = targetCommit.findPathAndHashByFilename(filename);
         if (s == null) {
             System.out.println("File does not exist in that commit.");
@@ -442,18 +453,18 @@ public class Repository {
      *
      * @param branchName
      */
-    public void checkout3(String branchName) {
+    public boolean checkout3(String branchName) {
         File start = new File(System.getProperty("user.dir"));
         repoExist(start);
         File targetBranchRef = join(getREFS(), branchName);
         if (!targetBranchRef.exists()) {
             System.out.println("No such branch exists.");
-            System.exit(0);
+            return false;
         }
         String curBranchName = readContentsAsString(getHEAD());
         if (curBranchName.equals(branchName)) {
             System.out.println("No need to checkout the current branch.");
-            System.exit(0);
+            return false;
         }
         // 当前与目标提交
         Commit curCommit = getCurCommit();
@@ -470,7 +481,7 @@ public class Repository {
                 boolean existsInTarget = targetTree.getFiles().containsKey(name);
                 if (!trackedInCur && existsInTarget) {
                     System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
+                    return false;
                 }
             }
         }
@@ -491,10 +502,8 @@ public class Repository {
         // 更新 HEAD 指向目标分支名
         writeContents(getHEAD(), branchName);
         // 清空暂存区
-        removeFrom(getSTAGINGADD());
-        removeFrom(getSTAGINGREMOVE());
-        getSTAGINGREMOVE().mkdirs();
-        getSTAGINGADD().mkdirs();
+        clearStagingArea();
+        return true;
     }
 
     /**
@@ -536,6 +545,23 @@ public class Repository {
         //要是分支存在
         targetBranch.delete();
 
+    }
+
+    /**
+     * reset命令
+     */
+    public void reset(String commitId){
+        File start = new File(System.getProperty("user.dir"));
+        repoExist(start);
+        Commit c = isCommitExist(commitId);
+        //已知存在这个commitId,把当前分支的头节点先保存（便于失败后重新写入）
+        //然后指向当前commit
+        File curBranch = join(getREFS(),readContentsAsString(getHEAD()));
+        Commit backUp = readObject(curBranch, Commit.class);
+        writeObject(curBranch,c);
+        if (!checkout3(curBranch.getName())){
+            writeObject(curBranch,backUp);
+        }
     }
 
 
